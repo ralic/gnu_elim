@@ -40,6 +40,7 @@ DEFINES     := -D_GNU_SOURCE                 \
 CFLAGS      += -Wall -g -O2 -std=c99 $(DEFINES)
 CFLAGS      += $(foreach P, $(PACKAGES), \
                          $(shell pkg-config --cflags $(subst $s,$S,$P)))
+LDFLAGS     += -Xlinker --no-as-needed
 LDFLAGS     += $(foreach P, $(PACKAGES), \
                          $(shell pkg-config --libs   $(subst $s,$S,$P))) 
 LDFLAGS     += -lm
