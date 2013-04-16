@@ -49,7 +49,7 @@ typedef enum _xmlrpc_type
     XRPC_ALIST   ,
     XRPC_LIST    ,
     XRPC_DATE    ,
-    XRPC_NIL         
+    XRPC_NIL
 } xmlrpc_type;
 
 #endif
