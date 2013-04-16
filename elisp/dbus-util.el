@@ -88,9 +88,9 @@ Returns a data structure that dbus.el should be able to use for TYPE."
         (sig1 (substring type 1)))
     (if (stringp value) (setq value (encode-coding-string value 'utf-8)))
     (case sig0
-      (?s (list :string value))
-      (?u (list :uint32 value))
-      (?i (list :int32  value))
+      (?s (list :string (or value "")))
+      (?u (list :uint32 (or value  0)))
+      (?i (list :int32  (or value  0)))
       (?a (list
            (if (not value)
                (apply 'list :array :signature sig1 nil)
