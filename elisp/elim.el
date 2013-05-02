@@ -1,9 +1,14 @@
-;; Copyright © 2009-2011 Vivek Dasmohapatra
+;;; elim.el --- provide an IM framework via an external daemon
 
+;; Copyright © 2009-2013 Vivek Dasmohapatra
+
+;; Author: Vivek Dasmohapatra <vivek@etla.org>
+;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; email : vivek@etla.org
 ;; irc   : fledermaus on freenode, oftc
 ;; jabber: fledermaus@jabber.earth.li
 
+;; This file is NOT part of GNU Emacs
 ;; This file is part of elim.
 
 ;; elim is free software: you can redistribute it and/or modify
@@ -18,6 +23,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with elim.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
 (require 'cl        )
 (require 'browse-url)
 (require 'wid-edit  )
@@ -1412,3 +1419,5 @@ on the parameters required to join a chat/room/channel on that PROTOCOL."
         (elim-avalue "parameters" (elim-avalue "value" args)) nil) )))
 
 (provide 'elim)
+
+;;; elim.el ends here

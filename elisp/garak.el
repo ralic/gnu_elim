@@ -1,9 +1,14 @@
-;; Copyright © 2009-2011 Vivek Dasmohapatra 
+;;; garak.el --- Provide an IM client based on elim.el
 
+;; Copyright © 2009-2013 Vivek Dasmohapatra 
+
+;; Author: Vivek Dasmohapatra <vivek@etla.org>
+;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
 ;; email : vivek@etla.org
 ;; irc   : fledermaus on freenode, oftc
 ;; jabber: fledermaus@jabber.earth.li
 
+;; This file is NOT part of GNU Emacs
 ;; This file is part of elim.
 
 ;; elim is free software: you can redistribute it and/or modify
@@ -18,6 +23,8 @@
 
 ;; You should have received a copy of the GNU General Public License
 ;; along with elim.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Code:
 (eval-and-compile
   (require 'lui   nil t)
   (require 'elim  nil t)
@@ -3103,3 +3110,5 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
     (push-mark nil t)))
 
 (provide 'garak)
+
+;;; garak.el ends here
