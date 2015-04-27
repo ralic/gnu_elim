@@ -205,10 +205,14 @@ a straightforward elisp s-expression."
         (list 'float attr val))) ))
 
 (defun elim-data-to-proto (x &optional n)
+  "Encapsulate binary data X for safe transmission over the elim protocol.
+If a name attribute N (a string) is supplied, add that to the payload."
   (list 'data (if n (list (cons 'name n)) nil)
         (base64-encode-string (string-as-unibyte x)) ))
 
 (defun elim-binp (x)
+  "Determine if the data in X need binary-safe encoding.
+Currently only NUL bytes in strings trigger this."
   (and (stringp x) (string-match "\0" x)))
 
 (defun elim-unprop (s) (set-text-properties 0 (length s) nil s) s)
@@ -286,8 +290,10 @@ and return an s-expression suitable for making a call to an elim daemon."
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; daemon i/o loop
 (defun elim-handle-sexp (proc sexp)
-  ;;(when (eq (caar (cddr sexp)) 'elim-blist-remove-node)
-  ;;  (elim-debug "RECEIVED: %S" sexp))
+  "Parse an elim protocol s-expression SEXP sent by process PROC.
+If it is of a known type, handle it with `elim-handle-call' (a call
+from the daemon to us) or `elim-handle-resp' (a response from the daemon
+to a call made or relayed by us)."
   (when (listp sexp)
     (let ((type (car   sexp))
           (name (caar (cddr sexp)))
@@ -331,6 +337,9 @@ and return an s-expression suitable for making a call to an elim daemon."
     (when handler (funcall handler proc name id attr args)) ))
 
 (defun elim-handle-call (proc name attr args)
+  "Look for a handler for NAME (a symbol) with `elim-get-call-handler-by-name'
+and pass the call on to it if found. If no handler is registered, pass the call
+to `elim-call-client-handler' instead."
   (let ( (handler (elim-get-call-handler-by-name proc name))
          (id      (cdr (assq 'id attr))) )
     (if (functionp handler)
@@ -417,6 +426,8 @@ and return an s-expression suitable for making a call to an elim daemon."
       (warn "%s<%s> failed (%S)" name id status message)) ))
 
 (defun elim-client-handler (proc name)
+  "Return the per-process elim call handler for NAME (a symbol) associated with process PROC. These handlers are registered by the client when it calls 
+`elim-start'."
   (cdr (assq name (elim-fetch-process-data proc :client-ops))))
 
 (defun elim-store-response-by-id (proc name id attr args)
@@ -432,6 +443,7 @@ and return an s-expression suitable for making a call to an elim daemon."
     slot))
 
 (defun elim-call-client-handler (proc name id status args)
+  "Look for a handler for elim protocol function call NAME (a symbol), and invoke it with process PROC, call id ID, status STATUS (an integer) and payload ARGS. If `elim-client-handler' does not find a handler, pass it to the 'error handler (which is required to exist) if STATUS is non-zero."
   (let ( (handler (elim-client-handler proc name)) )
     (elim-debug "(elim-call-client-handler %S %S %s ...)" name id status)
     (if (functionp handler)
@@ -543,15 +555,19 @@ into any clients."
   (elim-call-client-handler proc name id status args))
 
 (defun elim-account-info-cache (proc name id status args type)
+  "Cache the per-process PROC account data in ARGS, then relay the
+call to the client handler found by `elim-call-client-handler'."
   (when (memq type '(:account-status :account-connection))
     (let ((account-uid (elim-avalue "account-uid" args)))
       (elim-update-process-data proc type account-uid args))
     (elim-call-client-handler proc name id status args)))
 
 (defun elim-account-status-changed (proc name id status args)
+  "Relay the call to the client handler via `elim-account-info-cache'."
   (elim-account-info-cache proc name id status args :account-status))
 
 (defun elim-connection-state (proc name id status args)
+  "Relay the call to the client handler via `elim-account-info-cache'."
   (elim-account-info-cache proc name id status args :account-connection))
 
 (defun elim-file-transfer-status (proc name id status args);
