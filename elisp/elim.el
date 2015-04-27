@@ -192,7 +192,7 @@ a straightforward elisp s-expression."
     (if name (cons name parsed) parsed)))
 
 (defun elim-entity-to-string (match)
-  (format "%c" (string-to-int (match-string 1 match))))
+  (format "%c" (string-to-number (match-string 1 match))))
 
 (defun elim-number-to-proto (number &optional attr)
   "Take a NUMBER and return an elim protocol sexp representing it"
