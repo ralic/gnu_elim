@@ -566,6 +566,7 @@ call to the client handler found by `elim-call-client-handler'."
   "Relay the call to the client handler via `elim-account-info-cache'."
   (elim-account-info-cache proc name id status args :account-status))
 
+(defalias 'elim-connection-progress 'elim-connection-state)
 (defun elim-connection-state (proc name id status args)
   "Relay the call to the client handler via `elim-account-info-cache'."
   (elim-account-info-cache proc name id status args :account-connection))
