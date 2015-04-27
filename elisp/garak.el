@@ -280,29 +280,6 @@ It should return one of:\n
           garak-ui-widget-navigation)
     keymap))
 
-(defvar garak-tree-widget-button-keymap 
-  (garak-ui-widget-make-keymap tree-widget-button-keymap))
-
-(define-widget 'garak-tree-widget-icon 'tree-widget-icon
-  "Basic widget other garak-tree-widget icons are derived from."
-  :keymap        garak-tree-widget-button-keymap
-  :button-keymap garak-tree-widget-button-keymap)
-
-(define-widget 'garak-tree-widget-open-icon 'garak-tree-widget-icon
-  "Garak UI icon for an expanded tree-widget node."
-  :tag        "[-]"
-  :glyph-name "open")
-
-(define-widget 'garak-tree-widget-close-icon 'garak-tree-widget-icon
-  "Garak UI icon for a collapsed tree-widget node."
-  :tag        "[+]"
-  :glyph-name "close")
-
-(define-widget 'garak-tree-widget-empty-icon 'garak-tree-widget-icon
-  "Garak UI icon for an expanded tree-widget node with no child."
-  :tag        "[X]"
-  :glyph-name "empty")
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; misc utils
 (defun garak-summarise-text (text &optional size prefix postfix ellipsis)
@@ -1027,7 +1004,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (let ((inhibit-read-only t)) (erase-buffer))
       (setq garak-roomlist-field nil)
       (setq garak-roomlist-index nil)
-      (toggle-read-only 1))
+      (setq buffer-read-only t))
     (display-buffer buf) ))
 
 (defun insert-formatted-str-field (f) 
@@ -1342,10 +1319,10 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   (let ((args (widget-get widget :args  ))
 	(old  (widget-get widget :choice)))
     (cond ((not (display-popup-menus-p))              nil)     ;; no popups
-	  ((> (length args) widget-menu-max-size)     nil)     ;; list too long
-	  ((> (length args) 2)                          t)     ;; use menu
-	  ((and widget-choice-toggle (memq old args)) nil)     ;; toggle
-	  (t                                            t)) )) ;; ask
+          ((> (length args) widget-menu-max-size)     nil)     ;; list too long
+          ((> (length args) 2)                          t)     ;; use menu
+          ((and widget-choice-toggle (memq old args)) nil)     ;; toggle
+          (t                                            t)) )) ;; ask
 
 (defun garak-ui-account-options-ok-cb (&optional parent child event &rest stuff)
   (when elim-form-ui-args
@@ -1727,30 +1704,26 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   (if (tree-widget-use-image-p) (garak-load-icons))
   (let ((blist   (elim-buddy-list proc))
         (icons   (copy-sequence garak-icons))
-        (keymap  nil)
         (bbuffer (or (elim-fetch-process-data proc :blist-buffer) 
                      (get-buffer garak-ui-buffer-name))))
     (when (not (garak-buffer-reusable proc bbuffer))
-      (setq bbuffer (generate-new-buffer garak-ui-buffer-name)
-            keymap  garak-tree-widget-button-keymap))
+      (setq bbuffer (generate-new-buffer garak-ui-buffer-name)))
     (elim-store-process-data proc :blist-buffer bbuffer)
     (with-current-buffer bbuffer
       (setq buffer-undo-list t)
       (elim-init-ui-buffer)
       (garak-init-local-storage)
-      (make-local-variable 'garak-updated-blist-groups)
+      ;;(make-local-variable 'garak-updated-blist-groups)
       (setq garak-elim-process proc)
       ;; initialise tree-widget support in this buffer
-      (garak-icon-theme-init)
-      (add-hook 'tree-widget-before-create-icon-functions
-                'garak-ui-node-setup-icon nil t)
+      ;; (garak-icon-theme-init)
+      ;;(add-hook 'tree-widget-before-create-icon-functions
+      ;;          'garak-ui-node-setup-icon nil t)
       (setq elim-form-ui-args (list :process proc))
-      (garak-insert-account-list)
-      (mapc
-       (lambda (N)
-         (garak-insert-buddy-list-toplevel proc N)) blist)
-      (if keymap (use-local-map keymap))
-      (widget-setup))
+      (erase-buffer)
+      (garak-blist-insert-account-list)
+      (garak-blist-insert-buddy-list)
+      (garak-blist-mode))
     bbuffer))
 
 (defun garak-menu-actions-to-choices (raw &optional cooked)
@@ -1968,22 +1941,6 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
                     (garak-choice-item "Configure"     (cons :config uid))
                     (garak-choice-item "Extended Menu" (cons :menu   uid))) ))
 
-(defun garak-account-list-node-children (&optional widget)
-  (mapcar
-   (lambda (N)
-     (garak-account-list-node-widget garak-elim-process N))
-   (elim-account-alist garak-elim-process)))
-
-(defun garak-insert-account-list ()
-  (apply 'widget-create 'tree-widget
-         :open        t
-         :expander   'garak-account-list-node-children
-         :open-icon  'garak-tree-widget-open-icon
-         :close-icon 'garak-tree-widget-close-icon
-         :empty-icon 'garak-tree-widget-empty-icon
-         :garak-type :accounts
-         :tag        "Accounts"
-         (garak-account-list-node-children)))
 
 (defun garak-buddy-list-node-children (widget)
   (let ((uid (widget-get widget :buddy)) children process dummy kids)
@@ -2100,18 +2057,16 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
     (apply 'widget-apply (garak-tree-widget-real-target widget) prop args)))
 
 (defun garak-ui-find-node (uid type)
-  (let ((last-point -1) (found nil) (widget nil)
-        (inhibit-point-motion-hooks t)
-        ;;(inhibit-redisplay          t)
-        )
+  (let (found target what suid)
+    (setq what   (cond ((eq :buddy   type) "b")
+                       ((eq :account type) "a")
+                       (t                  "x"))
+          suid   (format "%s" uid)
+          target (concat "^.." what " \\[\\S-+\\]" suid "\\s-"))
     (save-excursion
       (goto-char (point-min))
-      (while (and (not found) (< last-point (point)))
-        (when (and (setq widget (widget-at))
-                   (eql (garak-tree-widget-get (widget-at) type) uid))
-          (setq found (cons (point) (car widget))))
-        (setq last-point (point))
-        (ignore-errors (widget-forward 1)) ))
+      (when (search-forward-regexp target nil t)
+        (setq found (line-beginning-position))))
     found))
 
 (defun garak-buddy-node-label (buddy)
@@ -2313,73 +2268,36 @@ NODE-A and NODE-B must be standard (uid ((name . value) ...)) nodes or nil."
   "This function handles updating the garak ui when the state of one of your
 accounts changes. Typically this is as a result of elim-account-status-changed
 elim-connection-state or elim-connection-progress, but any call can be handled as long as an \"account-uid\" entry is present in the ARGS alist."
-  (let (buffer auid where-widget point end icon-name adata widget
-        icon conn kids node tag proto iname alt atag aname)
+  (let (buffer auid where adata)
     (setq buffer (elim-fetch-process-data proc :blist-buffer)
-          auid   (elim-avalue "account-uid" args)
-          status nil)
+          auid   (elim-avalue "account-uid" args))
     ;; update any account conversation buffers with _our_ new status
-    (garak-update-account-conversations proc auid)
+    (garak-update-account-conversations proc auid)    
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; proceed to updating the blist ui buffer
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
-        (setq where-widget (garak-ui-find-node auid :account))
+        (setq where (garak-ui-find-node auid :account))
 
-        ;; set the conn or status data (whichever is appropriate)
-        (cond ((eq name 'elim-account-status-changed) (setq status args))
-              ((eq name 'elim-connection-state      ) (setq conn   args))
-              ((eq name 'elim-connection-progress   ) (setq conn   args)))
-
-        ;; fetch any data we did not receive:
-        (when (not conn  ) (setq conn   (elim-account-connection proc auid)))
-        (when (not status) (setq status (elim-account-status     proc auid)))
-
-        ;; pick the most suitable status icon
-        (if (eq name 'elim-exit)
-            (setq icon-name ":offline")
-          (setq icon-name (garak-account-list-choose-icon conn status)))
-        ;;(message "CHOSE ICON: %S" icon-name)
-        ;; widget not found or removing an account => refresh the parent node.
-        ;; otherwise                               => update node icon
-        (if (or (eq 'remove-account name) (not where-widget))
-            ;; refreshing parent node:
-            (when (setq where-widget (garak-ui-find-node :accounts :garak-type)
-                        point        (car where-widget))
-              (setq node (widget-at point)
-                    kids (garak-tree-widget-apply node :expander))
-              (garak-tree-widget-set node :args kids)
-              (when (garak-tree-widget-get node :open)
-                (widget-apply node :action)
-                (widget-apply node :action)))
-          ;; updating node icon:
-          (setq point (car where-widget)
-                end   (next-single-char-property-change point 'display)
-                tag   (elim-avalue icon-name garak-icon-tags)
-                adata (elim-account-data proc auid)
-                proto (elim-avalue :proto adata)
-                aname (elim-avalue :name  adata)
-                iname (format ":%s" proto)
-                atag  (or (elim-avalue iname garak-icon-tags) " ?? ")
-                alt   (format "[%-4s]%s%s" atag tag aname)
-                icon  (tree-widget-find-image icon-name))
-          (let ((inhibit-read-only t) old)
-            (setq widget (widget-at point)
-                  old    (widget-get widget :tag))
-            (if (eq (cdr where-widget) 'menu-choice)
-                (widget-put widget :tag alt)
-              (widget-put widget :tag tag))
-            (if (and icon (tree-widget-use-image-p))
-                (put-text-property point end 'display icon) ;; widgets w images
-              (when tag
-                (setq end (+ (length old) point))
-                (save-excursion
-                  (goto-char point)
-                  (setq old (make-string (length old) ?.))
-                  (when (search-forward-regexp old end t)
-                    (if (eq (cdr where-widget) 'menu-choice)
-                        (replace-match alt nil t)
-                      (replace-match tag nil t))) )) )) )) )))
+        (cond ;; account is present but should be removed:
+              ((and (eq 'remove-account name) where)
+               (goto-char where)
+               (delete-region where (line-end-position)))
+              ;; account is present and is not being removed (update)
+              ((and (not (eq 'remove-account name)) where)
+               (setq adata (elim-account-data proc auid))
+               (goto-char where)
+               (forward-char 2)
+               (delete-region (point) (line-end-position))
+               (insert (garak-blist-account-text adata)))
+              ;; account is absent and is not being removed (add it)
+              ((and (not (eq 'remove-account name)) (not where))
+               (setq adata (elim-account-data proc auid))
+               ;; FIXME: jump to location where we should insert the
+               ;; new account node
+               ;;(insert (garak-blist-account-text adata) "\n")
+               )
+              ) )) ))
 
 (defun garak-delete-buddy (proc name id status args)
   (let ((inhibit-read-only t) buid puid where-widget point widget buffer dummy)
@@ -3110,5 +3028,6 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
     (push-mark nil t)))
 
 (provide 'garak)
+(require 'garak-blist)
 
 ;;; garak.el ends here
