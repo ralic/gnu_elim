@@ -114,7 +114,7 @@
     (format "a [%s]%s %s"
             proto uid (elim-avalue :name val)) ))
 
-(defun garak-blist-buddy-text (bnode)
+(defun garak-blist-buddy-text (bnode &optional prefix)
   (let (uid cname type auid name proto adata)
     (setq uid   (elim-avalue "bnode-uid"     bnode)
           cname (elim-avalue "contact-alias" bnode)
@@ -126,7 +126,7 @@
     (if (and (not proto) auid)
         (setq adata (elim-account-data garak-elim-process auid)
               proto (elim-avalue :proto adata)))
-    (format "b [%s]%s %s" (or proto "person") uid name) ))
+    (format "%c [%s]%s %s" (or prefix ?b) (or proto "none") uid name) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymap functions
@@ -203,7 +203,7 @@ if the keypress or mouse-click is on an account or contact."
 ;; buddy entry handlers
 (defun garak-blist-insert-buddy-toplevel (bnode &optional kids spred)
   (let (last)
-    (insert "+ " (garak-buddy-node-label bnode) "\n")
+    (insert (garak-blist-buddy-text bnode ?+) "\n")
     (or kids (setq kids
                    (elim-buddy-children garak-elim-process
                                         (elim-avalue "bnode-uid" bnode))))
