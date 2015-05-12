@@ -10,9 +10,13 @@
 (defvar garak-blist-contact-node-re "^[├└|`][──]b \\[\\S-+\\]\\(.*?\\) \\(.*\\)")
 
 (defvar garak-blist-font-lock-keywords
-  '(("^\\(\\+\\|Gª\\)\\s-*\\(.+\\)"
+  '(("^\\(Gª\\)\\s-*\\(.+\\)"
      (1 (garak-blist-icon-props))
      (2 font-lock-constant-face ))
+    ("^\\(\\+\\) \\(\\[\\(\\S-+?\\)\\]\\(.*?\\) \\)\\(.*\\)"
+     (1 (garak-blist-icon-props))
+     (2 (garak-blist-node-proto-props ))
+     (5 (garak-blist-node-label-props )))
     ("^[├└|`][-─]\\([ab]\\) \\(\\[\\(\\S-+?\\)\\]\\(.*?\\)\\) \\(.*\\)"
      (1 (garak-blist-node-status-props))
      (2 (garak-blist-node-proto-props ))
@@ -45,9 +49,11 @@
 (defun garak-blist-node-proto-props ()
   (let (protocol icon)
     (setq protocol (match-string 2)
-          protocol (save-match-data (cadr (split-string protocol "[][]")))
-          icon     (elim-avalue (concat ":prpl-" protocol) garak-icons))
-    (or icon (setq icon (elim-avalue (concat ":" protocol) garak-icons)))
+          protocol (save-match-data (cadr (split-string protocol "[][]"))))
+    (if (equal "none" protocol)
+        (setq icon "")
+      (setq icon (elim-avalue (concat ":prpl-" protocol) garak-icons))
+      (or icon (setq icon (elim-avalue (concat ":" protocol) garak-icons))))
     (list 'face font-lock-type-face 'display (or icon "○"))))
 
 (defun garak-blist-node-status (type what)
