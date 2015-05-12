@@ -185,13 +185,12 @@ if the keypress or mouse-click is on an account or contact."
           ((eq op :config) (elim-account-options proc  acct ccb))
           ((eq op :remove) (garak-maybe-remove-account acct))
           ((eq op :menu  )
-           (let ((m-event event))
-             (setq menu-cb
-                   (lambda (proc name id attr args)
-                     (garak-account-menu-response-handler proc name id
-                                                          attr args m-event)))
-             (elim-account-menu proc acct menu-cb) ))
-          (t (elim-debug "UI Account Operation `%S' not implemented" value))) ))
+           (setq menu-cb
+                 (lambda (proc name id attr args)
+                   (garak-account-menu-response-handler proc name id
+                                                        attr args nil)))
+           (elim-account-menu proc acct menu-cb) )
+          (t (elim-debug "UI Account Operation `%S' not implemented" op))) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymaps
