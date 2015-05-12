@@ -95,7 +95,7 @@
         icon-name what)
     (setq what      (garak-blist-name-or-uid suid)
           icon-name (garak-blist-node-status type what))
-    (message "icon: %S ← (%S . %S)" icon-name type what)
+    ;;(message "icon: %S ← (%S . %S)" icon-name type what)
     (list 'face font-lock-constant-face
           'display (elim-avalue icon-name garak-icons)) ))
 
