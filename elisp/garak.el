@@ -1,6 +1,6 @@
 ;;; garak.el --- Provide an IM client based on elim.el
 
-;; Copyright © 2009-2013 Vivek Dasmohapatra 
+;; Copyright © 2009-2013 Vivek Dasmohapatra
 
 ;; Author: Vivek Dasmohapatra <vivek@etla.org>
 ;; Maintainer: Vivek Dasmohapatra <vivek@etla.org>
@@ -178,8 +178,8 @@ substitute these characters for the basic ascii ones:\n
               ":chat"        ":connecting"   ":extended-away"  ":garak"
               ":invisible"   ":log-in"       ":log-out"        ":offline"
               ":off"         ":on"           ":person"         ":unavailable"
-              ":prpl-aim"    ":prpl-bonjour" ":prpl-gg"        ":prpl-icq"    
-              ":prpl-irc"    ":prpl-jabber"  ":prpl-meanwhile" ":prpl-msn"  
+              ":prpl-aim"    ":prpl-bonjour" ":prpl-gg"        ":prpl-icq"
+              ":prpl-irc"    ":prpl-jabber"  ":prpl-meanwhile" ":prpl-msn"
               ":prpl-novell" ":prpl-qq"      ":prpl-silc"      ":prpl-simple"
               ":prpl-yahoo"  ":prpl-zephyr"))
   :type     '(alist :key-type   (string :format "Icon: %v " :size 20)
@@ -197,7 +197,7 @@ substitute these characters for the basic ascii ones:\n
 (defcustom garak-alert-methods nil
   "The mechanism(s) to use when alerting a user.
 If the user-supplied-functions option below is selected, each function
-specified is called in turn, and receives the same arguments as 
+specified is called in turn, and receives the same arguments as
 `garak-alert-user'"
   :group 'garak
   :tag "Alert by: "
@@ -276,7 +276,7 @@ It should return one of:\n
   (let ((keymap (make-sparse-keymap)))
     (if parent (set-keymap-parent keymap parent))
     (mapc (lambda (key)
-            (define-key keymap (read-kbd-macro (car key)) (cdr key))) 
+            (define-key keymap (read-kbd-macro (car key)) (cdr key)))
           garak-ui-widget-navigation)
     keymap))
 
@@ -284,7 +284,7 @@ It should return one of:\n
 ;; misc utils
 (defun garak-summarise-text (text &optional size prefix postfix ellipsis)
   "Cut a string TEXT down to SIZE characters (default 80).
-The summarised text is divided into PREFIX chars from the start followed 
+The summarised text is divided into PREFIX chars from the start followed
 by \" ELLIPSIS \" followed by POSTFIX chars from the end.
 PREFIX and POSTFIX default to equal sized chunks based on SIZE by default.
 If TEXT is not greater than SIZE chars, it is returned verbatim.
@@ -297,7 +297,7 @@ over SIZE."
   (setq size (+ prefix 2 (length ellipsis) postfix))
   (if (<= (length text) size)
       text
-    (concat (substring text 0 prefix) 
+    (concat (substring text 0 prefix)
             " " ellipsis " "
             (substring text (- (length text) postfix))) ))
 
@@ -373,7 +373,7 @@ leading up to this point."
     (elim-roomlist-create        . garak-roomlist-create     )
     (elim-roomlist-add           . garak-roomlist-add        )
     (elim-roomlist-set-field     . garak-roomlist-set-field  )
-    (elim-roomlist-in-progress   . garak-roomlist-in-progress) 
+    (elim-roomlist-in-progress   . garak-roomlist-in-progress)
     ;; accounts:
     (add-account                 . garak-account-update      )
     (remove-account              . garak-account-update      )
@@ -399,14 +399,14 @@ leading up to this point."
     (elim-typing-update          . garak-conv-typing-state   )
     ;; process related
     (elim-exit                   . garak-elim-exit           )
-    ;; failsafe error handler     
+    ;; failsafe error handler
     (error                       . garak-error-handler       ))
   "Alist of elim callbacks and their corresponding handlers")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; error handling
 (defun garak-error-handler (proc name id status error)
-  (let ((message (elim-add-face 
+  (let ((message (elim-add-face
                   (format "%S: %s" name error) 'garak-warning-face))
         (target  (window-buffer))
         (buf      nil)
@@ -463,7 +463,7 @@ returns its value, otherwise it returns `garak-flyspell-default-dictionary'."
   (let ((uid   (elim-avalue "conv-uid"  args))
         (cname (elim-avalue "conv-name" args)) buffer)
     (when uid
-      (setq buffer (or (elim-avalue uid garak-conversation-buffers) 
+      (setq buffer (or (elim-avalue uid garak-conversation-buffers)
                        (get-buffer cname))))
     (when (and (bufferp buffer) (not (buffer-live-p buffer)))
       (rassq-delete-all buffer garak-conversation-buffers)
@@ -474,7 +474,7 @@ returns its value, otherwise it returns `garak-flyspell-default-dictionary'."
           ;; create new buffer, set its mode, init buffer local storage
           (setq buffer (generate-new-buffer cname)
                 garak-conversation-buffers
-                (cons (cons uid buffer) garak-conversation-buffers)) 
+                (cons (cons uid buffer) garak-conversation-buffers))
           (with-current-buffer buffer
             (garak-mode)
             (garak-init-local-storage)
@@ -490,7 +490,7 @@ returns its value, otherwise it returns `garak-flyspell-default-dictionary'."
                   header-line-format (list t '(" "
                                                garak-typing-state
                                                " "
-                                               garak-account-name 
+                                               garak-account-name
                                                garak-account-presence
                                                " - "
                                                garak-contact-presence
@@ -514,7 +514,7 @@ returns its value, otherwise it returns `garak-flyspell-default-dictionary'."
                     icon   (tree-widget-find-image status)
                     tag    (or (elim-avalue status garak-icon-tags) ""))
               (if icon (setq tag (propertize tag 'display icon)))
-              (setq garak-contact-presence tag)) 
+              (setq garak-contact-presence tag))
             (lui-flyspell-change-dictionary (garak-conversation-dictionary))) ))
     buffer))
 
@@ -529,7 +529,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
      (with-current-buffer buffer
        (when (and (eq 'garak-mode  major-mode)
                   (eq garak-elim-process proc)
-                  (if predicate (funcall predicate buffer) t)) 
+                  (if predicate (funcall predicate buffer) t))
          (apply function args)) ))
    (buffer-list)))
 
@@ -562,8 +562,8 @@ In addition, PREDICATE will receive the buffer as its only argument."
   (mapc
    (lambda (buffer)
      (with-current-buffer buffer
-       (when (and (eq 'garak-mode  major-mode) 
-                  (eq garak-elim-process proc)) 
+       (when (and (eq 'garak-mode  major-mode)
+                  (eq garak-elim-process proc))
          (let ((message (format "* elim process finished: %S *" args)))
            (lui-insert (elim-add-face message 'garak-warning-face)) )) ))
    (buffer-list)))
@@ -583,7 +583,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
   (garak-mapbuffers proc
    (lambda (&rest x)
      (lui-insert
-      (elim-add-face "* network restored *" 'garak-system-message-face)))) 
+      (elim-add-face "* network restored *" 'garak-system-message-face))))
   (mapc
    (lambda (uid &optional state)
      (setq state (elim-avalue "status-type" (elim-account-status proc uid)))
@@ -595,7 +595,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; notifications:
-(defun garak-notice-buffer (proc) 
+(defun garak-notice-buffer (proc)
   (let ((nbuf (elim-fetch-process-data proc :notice-buffer)))
     (when (not (buffer-live-p nbuf))
       (setq nbuf (get-buffer "*garak-notices*"))
@@ -621,9 +621,9 @@ In addition, PREDICATE will receive the buffer as its only argument."
       data)))
 
 (defun garak-interpret-image-markup (process string)
-  (let ((pos                 0) 
-        (case-fold-search    t) 
-        (counter             0) 
+  (let ((pos                 0)
+        (case-fold-search    t)
+        (counter             0)
         (garak-image-cache nil) ids id data image start end)
     (while (string-match "<img\\s-+id='\\([0-9]+\\)'>" string pos)
       (setq id  (string-to-number (match-string 1 string))
@@ -631,30 +631,30 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (add-to-list 'ids id nil 'eq))
     (if (display-images-p)
         (progn
-          (mapc 
-           (lambda (i) 
+          (mapc
+           (lambda (i)
              (elim-image process i 'garak-cache-image)
-             (mapc (lambda (x) 
+             (mapc (lambda (x)
                      (accept-process-output process 0 50 1)) '(0 1 2))) ids)
           (setq pos 0)
-          (while (string-match "<img\\s-+id='\\([0-9]+\\)'>" string pos) 
+          (while (string-match "<img\\s-+id='\\([0-9]+\\)'>" string pos)
             (setq pos   (match-end 0)
                   start (match-beginning 0)
-                  end   (match-end       0)  
+                  end   (match-end       0)
                   id    (match-string 1 string)
                   id    (string-to-number id)
                   data  (cdr (assq id garak-image-cache))
                   image (when data (create-image data nil t)))
             (when (and data image)
-              (put-text-property start end 'display image string)))) 
-      (while (string-match "<img\\s-+id='\\([0-9]+\\)'>" string pos) 
+              (put-text-property start end 'display image string))))
+      (while (string-match "<img\\s-+id='\\([0-9]+\\)'>" string pos)
         (setq pos (match-end 0))
-        (put-text-property (match-beginning 0) 
+        (put-text-property (match-beginning 0)
                            (match-end       0) 'display "[ICON]" string)))
     string))
 
 (defun garak-kill-notice (&optional widget child event &rest stuff)
-  (let ((value (widget-value widget)) 
+  (let ((value (widget-value widget))
         (sprop 'garak-notice-start)
         (eprop 'garak-notice-close)
         (proc   garak-elim-process)
@@ -688,7 +688,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
 
 (defun garak-end-notice (name id)
   (widget-create 'push-button
-                 :format "%[[Ok]%]" 
+                 :format "%[[Ok]%]"
                  :notify 'garak-kill-notice
                  :value  (list name id))
   (widget-insert (propertize "\n" 'garak-notice-close id)))
@@ -708,8 +708,8 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (when h1   (widget-insert (propertize h1 'face mface) ":\n"))
       (when h2   (widget-insert (propertize h2 'face mface) ":\n"))
       (when text (widget-insert text))
-      (garak-end-notice name id)) 
-    (let ((display-buffer-reuse-frames t)) 
+      (garak-end-notice name id))
+    (let ((display-buffer-reuse-frames t))
       (display-buffer nbuf)) ))
 
 (defun garak-notify-email (proc name id status args)
@@ -726,7 +726,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (widget-insert (propertize title 'face mface) "\n")
       (when url (widget-insert (propertize url 'face mface) ":\n"))
       (widget-insert (format "%s -> %s" from to) "\n")
-      (garak-end-notice name id)) 
+      (garak-end-notice name id))
     (let ((display-buffer-reuse-frames t))
       (display-buffer nbuf)) ))
 
@@ -737,7 +737,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (with-current-buffer nbuf
       (garak-begin-notice id)
       (widget-insert (propertize url 'face mface) "\n")
-      (garak-end-notice name id)) 
+      (garak-end-notice name id))
     (let ((display-buffer-reuse-frames t))
       (display-buffer nbuf)) ))
 
@@ -751,8 +751,8 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (with-current-buffer nbuf
       (garak-begin-notice id)
       (widget-insert (propertize bname 'face 'garak-nick-face) "\n")
-      (mapc 
-       (lambda (entry) 
+      (mapc
+       (lambda (entry)
          (let ((label (car entry)))
            (when (and (stringp label)
                       (not (equal  label "-"))
@@ -772,19 +772,19 @@ In addition, PREDICATE will receive the buffer as its only argument."
            (cond ((eq type :section-break)
                   (widget-insert "---------------------------------------\n"))
                  ((eq type :section-header)
-                  (widget-insert 
+                  (widget-insert
                    (format "%s "  (propertize label 'face 'garak-marker-face))
                    (format "%s\n" (propertize value 'face 'garak-marker-face))))
                  ((eq type :pair)
                   (if (not (equal "-" label))
-                      (widget-insert (format l-fmt label value)) 
+                      (widget-insert (format l-fmt label value))
                     (widget-insert value)) )) )) info)
-      (garak-end-notice name id)) 
+      (garak-end-notice name id))
     (let ((display-buffer-reuse-frames t))
       (display-buffer nbuf)) ))
 
 (defvar garak-search-button-menu nil)
-(defun garak-search-results-buffer (proc search-id args) 
+(defun garak-search-results-buffer (proc search-id args)
   (let ((i 0) sbuf sbuf-store)
     (setq sbuf-store (elim-fetch-process-data proc :search-buffers)
           sbuf       (elim-avalue search-id sbuf-store))
@@ -805,8 +805,8 @@ In addition, PREDICATE will receive the buffer as its only argument."
         (setq garak-account-uid (elim-avalue "account-uid" args))
         (set (make-local-variable 'garak-search-button-menu)
              (make-sparse-keymap "Actions..."))
-        (mapc 
-         (lambda (a) 
+        (mapc
+         (lambda (a)
            (let (cb action label)
              (setq label  (car a)
                    action (elim-avalue "action" (cdr a))
@@ -814,12 +814,12 @@ In addition, PREDICATE will receive the buffer as its only argument."
                             (interactive (list (this-command-keys)))
                             (when (vectorp e) (setq e (aref e 0)))
                             (setq e
-                                  (if (eventp e) 
-                                      (posn-point (event-start e)) 
+                                  (if (eventp e)
+                                      (posn-point (event-start e))
                                     (point)))
                             (garak-notify-search-callback e ,action)))
              (define-key garak-search-button-menu (format "%d" i)
-               (list 'menu-item label cb))) 
+               (list 'menu-item label cb)))
            (setq i (1+ i)))
          (elim-avalue "buttons" args)))
       (elim-store-process-data proc :search-buffers sbuf-store))
@@ -830,14 +830,14 @@ In addition, PREDICATE will receive the buffer as its only argument."
   ;; (message "garak-notify-search-callback(%S %S)" point action)
   (let ((row nil) (start point) (args nil) (call nil))
     (setq start (next-single-char-property-change (point-min) 'result-start)
-          row   (- (line-number-at-pos point) 
+          row   (- (line-number-at-pos point)
                    (line-number-at-pos start) 2)
-          args  (elim-simple-list-to-proto-alist 
+          args  (elim-simple-list-to-proto-alist
                  (list "search-id"   (elim-avalue "search-id" elim-form-ui-args)
                        "account-uid" garak-account-uid
                        "row-index"   row
                        "callback"    action))
-          call  (elim-daemon-call 'notify-search-callback nil args)) 
+          call  (elim-daemon-call 'notify-search-callback nil args))
     (elim-process-send garak-elim-process call) ))
 
 (defun garak-notify-search (proc name id status args)
@@ -845,11 +845,11 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (erase-buffer)
     (setq elim-form-ui-args args)
     (mapc (lambda (x)
-            (when (and (> (length x) 0) (stringp x)) (insert x "\n"))) 
+            (when (and (> (length x) 0) (stringp x)) (insert x "\n")))
           (mapcar (lambda (k) (elim-avalue k args))
                   '("title" "primary" "secondary")))
     (insert (propertize "\n" 'result-start t))
-    (set (make-local-variable 'garak-search-column-labels) 
+    (set (make-local-variable 'garak-search-column-labels)
          (elim-avalue "columns" args)) ))
 
 (defun garak-notify-search-rows (proc name id status args)
@@ -866,12 +866,12 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (with-current-buffer (garak-search-results-buffer proc sid args)
       (setq titles garak-search-column-labels
             widths (make-vector (length titles) 0))
-      (delete-region 
+      (delete-region
        (1+ (previous-single-char-property-change (point-max) 'result-start))
        (point-max))
       (mapc (lambda (row)
               (setq n 0)
-              (mapc (lambda (cell) 
+              (mapc (lambda (cell)
                       (setq l (length cell))
                       (when (< (aref widths n) l) (aset widths n l))
                       (setq n (1+ n))) row))
@@ -880,12 +880,12 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (setq menu (if (current-local-map)
                      (copy-keymap (current-local-map))
                    (make-sparse-keymap)))
-      (mapc (lambda (key) 
+      (mapc (lambda (key)
               (define-key menu key garak-search-button-menu))
             (list (kbd "RET") (kbd "<down-mouse-1>")))
       (insert (apply 'format format titles) "\n")
       (mapc
-       (lambda (x) 
+       (lambda (x)
          (insert (propertize (apply 'format format x) 'keymap menu) "\n")) rows)
       (display-buffer (current-buffer))) ))
 
@@ -913,7 +913,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (warn "%S response %s %S: no target buffer" call call-id args)) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; roomlist 
+;; roomlist
 (defvar garak-roomlist-index nil)
 (defvar garak-roomlist-fields nil)
 (defvar garak-roomlist-menu nil)
@@ -923,7 +923,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
 ;;       (if (equal (cdr (assoc "name" (car fields))) name)
 ;;           0
 ;;         (let ((r (garak-roomlist-field-is-hidden name (cdr fields))))
-;;           (if (or (equal r 0) (equal r 1)) 
+;;           (if (or (equal r 0) (equal r 1))
 ;;               (+ r 1)
 ;;               nil)) ))
 
@@ -931,11 +931,11 @@ In addition, PREDICATE will receive the buffer as its only argument."
   (interactive (list (this-command-keys)))
   (let (line spec room req param arg help value)
     (when (vectorp e) (setq e (aref e 0)))
-    (setq line (line-number-at-pos 
+    (setq line (line-number-at-pos
                 (if (eventp e)
                     (posn-point (event-start e))
                   (point)))
-          spec (elim-chat-parameters garak-elim-process 
+          spec (elim-chat-parameters garak-elim-process
                                      garak-im-protocol)
           room (assoc line garak-roomlist-index))
     (let ((room-name   (car room))
@@ -970,7 +970,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (use-local-map menu)))
 
 (defun garak-roomlist-buffer (proc args)
-  (let* ((account-name (elim-avalue "account-name" args)) 
+  (let* ((account-name (elim-avalue "account-name" args))
          (account-uid  (elim-avalue "account-uid"  args))
          (im-protocol  (elim-avalue "im-protocol"  args))
          (roomlist-id  (elim-avalue "roomlist-id"  args))
@@ -1007,10 +1007,10 @@ In addition, PREDICATE will receive the buffer as its only argument."
       (setq buffer-read-only t))
     (display-buffer buf) ))
 
-(defun insert-formatted-str-field (f) 
+(defun insert-formatted-str-field (f)
   (ignore-errors (insert (concat (substring (format "%-24s" f) 0 24) " | "))))
 
-(defun insert-formatted-sep-field (c) 
+(defun insert-formatted-sep-field (c)
   (ignore-errors (insert (format "%24s-+-" (make-string 24 c)))))
 
 (defun garak-roomlist-set-field (proc name id status args)
@@ -1041,7 +1041,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (if (equal (cdr (assoc "field-name" (car fields))) name)
         (cdr (assoc "field-hidden" (car fields)))
       (garak-roomlist-field-is-hidden name (cdr fields)))))
-  
+
 (defun garak-roomlist-add (proc name id status args)
   (let* ((roomlist-id (elim-avalue "roomlist-id"  args))
          (buf-store   (elim-fetch-process-data proc :roomlist-buffers))
@@ -1051,24 +1051,24 @@ In addition, PREDICATE will receive the buffer as its only argument."
     (when buf
       (with-current-buffer buf
         (let ((inhibit-read-only t))
-          (save-excursion 
+          (save-excursion
             (goto-char (point-max))
-            (setq garak-roomlist-index 
+            (setq garak-roomlist-index
                   (cons (cons (line-number-at-pos) (cons room-name fields))
                         garak-roomlist-index))
             (insert-formatted-str-field room-name)
             (mapc (lambda (x)
-                    (let ((hidden (garak-roomlist-field-is-hidden 
+                    (let ((hidden (garak-roomlist-field-is-hidden
                                    (car x) garak-roomlist-fields))
                           (value (cdr x)))
                       (when (not hidden)
                         (cond ((stringp value)
                                (insert-formatted-str-field value))
                               ((integerp value)
-                               (insert-formatted-str-field 
+                               (insert-formatted-str-field
                                 (int-to-string value)))
                               ((booleanp value)
-                               (insert-formatted-str-field 
+                               (insert-formatted-str-field
                                 (if value "True" "")))))))
                   fields)
             (insert "\n")))))))
@@ -1081,7 +1081,7 @@ In addition, PREDICATE will receive the buffer as its only argument."
         (let ((inhibit-read-only t))
           (save-excursion
             (goto-char (point-max))
-            (insert (format "\n\nListed %d rooms from %s.\n" 
+            (insert (format "\n\nListed %d rooms from %s.\n"
                             (length garak-roomlist-index)
                             garak-account-name)))))
       (display-buffer buf))))
@@ -1129,7 +1129,7 @@ IS-NEW  : true if the buffer was just created (usually means a new conversation)
 TEXT    : the payload of the message
 ARGS    : The raw args passed to whatever function called garak-alert-user"
   (let (alert icon stamp uid self summarised)
-    (with-current-buffer buffer 
+    (with-current-buffer buffer
       (setq self (garak-abbreviate-nick garak-account-name)))
     (or (and (memq :new garak-alert-when) is-new (setq alert :new))
         (and (memq :hidden garak-alert-when)
@@ -1160,8 +1160,8 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
           (setcdr stamp (float-time))
         (setq garak-recent-alerts
               (cons (cons uid (float-time)) garak-recent-alerts)))
-      (mapc 
-       (lambda (how) 
+      (mapc
+       (lambda (how)
          (cond ((stringp    how) (play-sound-file how))
                ((functionp  how)
                 (funcall how
@@ -1196,7 +1196,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
                      (cdr (assoc "who"   args))
                      (garak-abbreviate-nick garak-account-name) ))
       (when (and (eq :im ctype)
-                 (string-match "^[0-9]+$" who) 
+                 (string-match "^[0-9]+$" who)
                  (> (length title) 0))
         (setq who title))
       (if (memq :system  flags)
@@ -1252,7 +1252,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
                   icon (tree-widget-find-image name))
             (if icon
                 (setq tag (propertize tag 'display icon)))
-            (setq garak-typing-state tag) 
+            (setq garak-typing-state tag)
             (force-mode-line-update)) )) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1317,7 +1317,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 
 (defun garak-menu-choice-mouse-down-action (widget &optional event)
   (let ((args (widget-get widget :args  ))
-	(old  (widget-get widget :choice)))
+    (old  (widget-get widget :choice)))
     (cond ((not (display-popup-menus-p))              nil)     ;; no popups
           ((> (length args) widget-menu-max-size)     nil)     ;; list too long
           ((> (length args) 2)                          t)     ;; use menu
@@ -1394,13 +1394,13 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; preferences buffer
-(defun garak-ui-create-prefs-buffer (proc) 
-  (let ((buffer (or (elim-fetch-process-data proc :prefs-buffer) 
+(defun garak-ui-create-prefs-buffer (proc)
+  (let ((buffer (or (elim-fetch-process-data proc :prefs-buffer)
                     (get-buffer "*garak-prefs**"))))
     (when (not (garak-buffer-reusable proc buffer))
       (setq buffer (generate-new-buffer "*garak-prefs*"))
       (elim-store-process-data proc :prefs-buffer buffer))
-    (with-current-buffer buffer 
+    (with-current-buffer buffer
       (elim-init-ui-buffer)
       (garak-init-local-storage)
       (setq garak-elim-process proc)
@@ -1416,35 +1416,35 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
           val    (elim-avalue "pref-value"   data)
           choice (elim-avalue "pref-choices" data))
     (if choice
-        (setq w-args 
-              (apply 'list      'choice 
+        (setq w-args
+              (apply 'list      'choice
                      :value      val
                      :format    "%t: %[%v%]\n"
                      :value-get 'widget-value-value-get
-                     (mapcar 
-                      (lambda (p) 
-                        (list 'const :format "%t" :tag (car p) (cdr p))) 
+                     (mapcar
+                      (lambda (p)
+                        (list 'const :format "%t" :tag (car p) (cdr p)))
                       choice)))
       (setq w-args
-            (cond 
+            (cond
              ((eq type :boolean) (list 'toggle    :format "%t: %[%v%]\n" val))
              ((eq type :string ) (list 'string    (or val "")))
              ((eq type :path   ) (list 'directory (or val "")))
-             ((eq type :int    ) (list 'number    (or val 0 ))) 
+             ((eq type :int    ) (list 'number    (or val 0 )))
              (t                  (list 'const     :value val)))))
     (apply 'widget-convert
            (car w-args)
            :tag        (format "%-16s" name)
-           :old-value  val  
+           :old-value  val
            :garak-pref (car pref)
            (cdr w-args)) ))
 
 (defun garak-ui-pref-significant-widgets ()
   (let ((last-point -1) wlist widget)
-    (save-excursion 
+    (save-excursion
       (goto-char (point-min))
       (while (< last-point (point))
-        (when (and (setq widget (widget-at)) 
+        (when (and (setq widget (widget-at))
                    (widget-get widget :garak-pref))
           (setq wlist (cons widget wlist)))
         (setq last-point (point))
@@ -1461,17 +1461,17 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 (defun garak-ui-prefs-changed ()
   (let (pref)
     (delq nil
-          (mapcar 
+          (mapcar
            (lambda (w)
              (when (setq pref (widget-get w :garak-pref))
-               (let ((old-value (widget-get   w :old-value)) 
+               (let ((old-value (widget-get   w :old-value))
                      (new-value (widget-value w)))
                  (and (not (garak-pref-equal old-value new-value))
                       (cons pref new-value)) )))
            (garak-ui-pref-significant-widgets))) ))
 
 (defun garak-ui-pref-node-command (&optional widget child event &rest args)
-  (message "garak-ui-pref-node-command(%S %S %S %S)" 
+  (message "garak-ui-pref-node-command(%S %S %S %S)"
            (car widget) (car child) event args))
 
 (defun garak-ui-pref-to-widget (pref)
@@ -1488,7 +1488,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
     (mapcar 'garak-ui-pref-to-widget kids)))
 
 (defun garak-ui-prefs-process-widgets (&optional parent child event &rest stuff)
-  (let ((actions (widget-value parent)) 
+  (let ((actions (widget-value parent))
         (proc     garak-elim-process))
     ;; (message "UI Prefs Button: %S" actions)
     (when (memq 'save   actions) (elim-set-prefs proc (garak-ui-prefs-changed)))
@@ -1516,7 +1516,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   (widget-insert "\n"))
 
 (defun garak-ui-prefs-insert-widget (proc name id attr args)
-  (let ((buffer (elim-fetch-process-data proc :prefs-buffer)) prefs) 
+  (let ((buffer (elim-fetch-process-data proc :prefs-buffer)) prefs)
     (when buffer
       (with-current-buffer buffer
         (garak-ui-prefs-insert-buttons)
@@ -1534,7 +1534,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; file transfers
 (defun garak-ui-ft-create-buffer (proc)
-  (let ((old-buffer (elim-fetch-process-data proc :ft-buffer)) 
+  (let ((old-buffer (elim-fetch-process-data proc :ft-buffer))
         (icons      (copy-sequence garak-icons))
         ft-buffer)
     ;; make sure we have a ui buffer
@@ -1560,13 +1560,13 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   (let ((uid (elim-avalue "xfer-uid" args)) buf)
     (with-current-buffer (setq buf (garak-ui-ft-create-buffer proc))
       (when (eq (garak-ui-ft-update-display proc args) :created)
-        (let ((display-buffer-reuse-frames t)) 
+        (let ((display-buffer-reuse-frames t))
           (display-buffer buf)) )) ))
 
 (defun garak-transfer-percent (proc name id status args)
   ;;(when nil
-  (let ((uid      (elim-avalue "xfer-uid"     args)) 
-        (progress (elim-avalue "xfer-percent" args)) 
+  (let ((uid      (elim-avalue "xfer-uid"     args))
+        (progress (elim-avalue "xfer-percent" args))
         (buf      (elim-fetch-process-data proc :ft-buffer)))
     (when (buffer-live-p buf)
       (with-current-buffer buf
@@ -1576,7 +1576,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 (defun garak-ui-ft-locate (uid)
   (let ((start  nil)
         (end    nil)
-        (pos   (point-min)) 
+        (pos   (point-min))
         (sprop 'garak-xfer-start)
         (eprop 'garak-xfer-end  ))
     (save-excursion
@@ -1617,12 +1617,12 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
                 (goto-char pos)
                 (when (not (looking-at (regexp-quote label)))
                   (delete-region pos pos2)
-                  (insert (propertize label 
-                                      'display  icon 
+                  (insert (propertize label
+                                      'display  icon
                                       'ft-state uid ))) ))) t)) ))
 
 (defun garak-ui-ft-update-display (proc xfer)
-  (let ((uid (elim-avalue "xfer-uid" xfer)) 
+  (let ((uid (elim-avalue "xfer-uid" xfer))
         (inhibit-read-only          t)
         (inhibit-point-motion-hooks t)
         (inhibit-modification-hooks t)
@@ -1649,8 +1649,8 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
       (setq s-label (propertize s-label 'display ft-icon 'ft-state uid)))
     (if (setq ft-region (garak-ui-ft-locate uid))
         ;; update existing xfer
-        (let ((start (car ft-region)) 
-              (end   (cdr ft-region)) 
+        (let ((start (car ft-region))
+              (end   (cdr ft-region))
               ;;(inhibit-redisplay   t)
               )
           ;;(message "updating existing widget %S [%s]" uid progress)
@@ -1704,7 +1704,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   (if (tree-widget-use-image-p) (garak-load-icons))
   (let ((blist   (elim-buddy-list proc))
         (icons   (copy-sequence garak-icons))
-        (bbuffer (or (elim-fetch-process-data proc :blist-buffer) 
+        (bbuffer (or (elim-fetch-process-data proc :blist-buffer)
                      (get-buffer garak-ui-buffer-name))))
     (when (not (garak-buffer-reusable proc bbuffer))
       (setq bbuffer (generate-new-buffer garak-ui-buffer-name)))
@@ -1724,11 +1724,11 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
     bbuffer))
 
 (defun garak-menu-actions-to-choices (raw &optional cooked)
-  (mapc 
+  (mapc
    (lambda (entry)
      (cond ((listp (cdr entry))
             (setq cooked (cons (car entry) cooked)
-                  cooked (nreverse 
+                  cooked (nreverse
                           (garak-menu-actions-to-choices (cdr entry) cooked))))
            (t (setq cooked (cons entry cooked))) )) raw)
   (nreverse cooked))
@@ -1782,9 +1782,9 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
           ((eq op :msg ) (elim-message proc auid bname nil))
           ((eq op :menu)
            (lexical-let ((m-event event))
-             (setq menu-cb 
-                   (lambda (proc name id attr args) 
-                     (garak-buddy-menu-response-handler 
+             (setq menu-cb
+                   (lambda (proc name id attr args)
+                     (garak-buddy-menu-response-handler
                       proc name id attr args m-event)))
              (elim-buddy-menu proc buid menu-cb) ))
           (t (elim-debug "UI Buddy Operation `%S' not implemented" op))) ))
@@ -1851,8 +1851,8 @@ buddy or the containing group of UID."
 
 (defun garak-buddy-node-label (buddy)
   "Given a buddy node entry BUDDY, return a suitable label - typically
-this is the alias, or the name if there is no alias - chat/muc/channel 
-nodes are a special case: Since they can't have aliases as such, a 
+this is the alias, or the name if there is no alias - chat/muc/channel
+nodes are a special case: Since they can't have aliases as such, a
 descriptive label is constructed to help disambiguate them."
   (let (type name alias opts proto k v)
     (setq type  (elim-avalue "bnode-type"  buddy)
@@ -1868,12 +1868,12 @@ descriptive label is constructed to help disambiguate them."
                   (setq alias (garak-abbreviate-nick
                                (elim-avalue "account-name" buddy)))
                   (format "%s > %s@%s | %s"
-                          (or (elim-avalue "handle" opts) alias) 
+                          (or (elim-avalue "handle" opts) alias)
                           (or (elim-avalue "room"   opts)  name)
                           (or (elim-avalue "server" opts)   "-")
                           (elim-avalue "account-name" buddy)))
                  (t (setq alias name)
-                    (mapc (lambda (x) 
+                    (mapc (lambda (x)
                             (setq k (car x) v (cdr x))
                             (if (string-match "user\\|nick\\|handle" k)
                                 (setq alias (concat v " > " alias)))) opts)
@@ -1957,7 +1957,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
     (setq buffer (elim-fetch-process-data proc :blist-buffer)
           auid   (elim-avalue "account-uid" args))
     ;; update any account conversation buffers with _our_ new status
-    (garak-update-account-conversations proc auid)    
+    (garak-update-account-conversations proc auid)
     ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
     ;; proceed to updating the blist ui buffer
     (when (buffer-live-p buffer)
@@ -2328,7 +2328,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
   '( "/add-account" "/add-buddy"    "/alias"          "/configure-account"
      "/connect"     "/disconnect"   "/list"           "/login"
      "/logoff"      "/logout"       "/msg"            "/prefs"
-     "/quit"        "/register"     "/remove-account" "/remove-buddy" 
+     "/quit"        "/register"     "/remove-account" "/remove-buddy"
      "/send"        "/status" ))
 
 (defvar garak-command-completers
@@ -2375,9 +2375,9 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
           acct      (or (nth 1 args) "")
           file      (or (nth 2 args) ""))
     (when (= (length file) 0) (setq file default-directory))
-    (if (file-directory-p file) 
+    (if (file-directory-p file)
         (setq dir file pattern nil)
-      (setq dir     (file-name-directory file) 
+      (setq dir     (file-name-directory file)
             pattern (file-name-nondirectory file)
             pattern (concat "^" (regexp-quote pattern))))
     (cond ((and garak-account-uid (= (length args) 2))
@@ -2389,7 +2389,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
            (setq available (mapcar (lambda (A) (cdr (assq :name (cdr A))))
                                    (elim-account-alist garak-elim-process))))
           ((= (length args) 3)
-           (setq available (directory-files dir nil pattern)) 
+           (setq available (directory-files dir nil pattern))
            (setq available (mapcar (lambda (f) (concat dir f)) available)) ))
     (cond ((and (= (length args) 2) (not (member acct available)))
            (all-completions acct available))
@@ -2406,7 +2406,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
                  available (nconc
                             (mapcar (lambda (A) (cdr (assq :name (cdr A))))
                                     (elim-account-alist garak-elim-process))
-                            (elim-get-buddies garak-elim-process filter 
+                            (elim-get-buddies garak-elim-process filter
                                               "bnode-name")) ))
           ((= (length args) 2)
            (setq available (mapcar (lambda (A) (cdr (assq :name (cdr A))))
@@ -2470,7 +2470,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
         (funcall completer prefix garak-im-protocol)) )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defvar garak-mode-map 
+(defvar garak-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "C-c C-o") 'garak-toggle-offline-buddies)
     (define-key map (kbd "C-c C-c") 'garak-deactivate)
@@ -2504,7 +2504,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
   (cond (garak-conv-uid     (message "Cannot reactivate conversations"))
         (garak-account-name (garak-cmd-connect garak-account-name))
         (garak-elim-process (garak-cmd-status "available")
-                            (garak-cmd-status "available")) 
+                            (garak-cmd-status "available"))
         (t (mapc (lambda (garak-elim-process)
                    (garak-cmd-status "available")
                    (garak-cmd-status "available")) (garak-processes))) ))
@@ -2533,9 +2533,9 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
       (setq point (point))
       (garak-load-logo)
       (when (and garak-display-splash garak-logo)
-        (insert-image garak-logo "GARAK") 
+        (insert-image garak-logo "GARAK")
         (insert "\n")
-        (display-buffer buffer) 
+        (display-buffer buffer)
         (sit-for 0))
       (garak-mode)
       (garak-init-local-storage))

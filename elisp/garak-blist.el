@@ -24,7 +24,7 @@
     ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; utils & metadata helpers
+;; metadata helpers
 (defun garak-blist-name-or-uid (x)
   (let ((uid (string-to-number x)))
     (if (equal 0 uid) x uid)))
@@ -82,7 +82,7 @@
            (setq node-data (elim-buddy-data garak-elim-process what))
            (let ((type    (elim-avalue "bnode-type" node-data))
                  (allowed (elim-avalue "allowed"    node-data))
-                 (online (elim-avalue "connected"   node-data)))
+                 (online  (elim-avalue "connected"  node-data)))
              (cond ((eq type :chat-node   ) ":chat" )
                    ((eq type :group-node  ) ":group")
                    ((eq type :contact-node)
@@ -117,7 +117,8 @@
 
 (defun garak-blist-account-text (adata)
   (let ((uid (car adata)) (val (cdr adata)) proto)
-    (setq proto (replace-regexp-in-string "^:?prpl-" "" (elim-avalue :proto val)))
+    (setq proto
+          (replace-regexp-in-string "^:?prpl-" "" (elim-avalue :proto val)))
     (format "a [%s]%s %s"
             proto uid (elim-avalue :name val)) ))
 
