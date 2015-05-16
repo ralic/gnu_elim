@@ -354,8 +354,8 @@ leading up to this point."
     (elim-account-request-auth   . garak-auth-requested      )
     ;; blist (buddy list) ops
     ;;(elim-blist-create-node                                )
-    (elim-blist-update-node      . garak-update-buddy-req    )
-    (elim-blist-remove-node      . garak-update-buddy-req    )
+    (elim-blist-update-node      . garak-update-buddy        )
+    (elim-blist-remove-node      . garak-update-buddy        )
     (elim-blist-request-add-buddy . garak-request-add-buddy  )
     ;; connection ops
     (elim-connection-state       . garak-account-update      )
@@ -1713,12 +1713,9 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
       (setq buffer-undo-list t)
       (elim-init-ui-buffer)
       (garak-init-local-storage)
-      ;;(make-local-variable 'garak-updated-blist-groups)
       (setq garak-elim-process proc)
       ;; initialise tree-widget support in this buffer
       ;; (garak-icon-theme-init)
-      ;;(add-hook 'tree-widget-before-create-icon-functions
-      ;;          'garak-ui-node-setup-icon nil t)
       (setq elim-form-ui-args (list :process proc))
       (erase-buffer)
       (garak-blist-insert-account-list)
@@ -1818,76 +1815,6 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
              (elim-account-menu proc auid menu-cb) ))
           (t (elim-debug "UI Account Operation `%S' not implemented" value))) ))
 
-(defun garak-buddy-list-node-widget (proc bnode)
-  (let (kids uid menu type name mtail plabel blabel auid aicon cname rawk spred)
-    (setq uid   (elim-avalue "bnode-uid"     bnode)
-          cname (elim-avalue "contact-alias" bnode)
-          type  (elim-avalue "bnode-type"    bnode)
-          auid  (elim-avalue "account-uid"   bnode)
-          name  (if (< 0 (length cname)) cname (garak-buddy-node-label bnode))
-          mtail (list (garak-choice-item "--single-line")
-                      (garak-choice-item "Remove" (cons :del uid))
-                      (garak-choice-item "--single-line"))
-          spred garak-buddy-list-sort-type
-          rawk  (delq nil (elim-buddy-children proc uid))
-          kids  (mapcar (lambda (N) (garak-buddy-list-node-widget proc N))
-                        (if spred (sort rawk spred) rawk))
-          menu  (cond ((eq type :chat-node )
-                       (list (garak-choice-item "Join" (cons :join uid))))
-                      ((eq type :buddy-node)
-                       (list 
-                        (garak-choice-item "Get Info"  (cons :info uid))
-                        (garak-choice-item "Send IM"   (cons :msg  uid))
-                        (garak-choice-item "Send File" (cons :xfer uid))
-                        (garak-choice-item "[Un]Block" (cons :priv uid)))) )
-          menu  (nconc menu mtail))
-    (when (memq type '(:chat-node :buddy-node))
-      (setcdr (last mtail)
-              (list (garak-choice-item "Extended Menu -->" (cons :menu uid))) ))
-    ;; pick an account icon if this bnode has an account and we want icons
-    (when (and auid (tree-widget-use-image-p))
-        (let (proto iname adata)
-          (setq adata (elim-account-data proc auid)
-                proto (elim-avalue :proto adata)
-                iname (format ":%s" proto)
-                aicon (tree-widget-find-image iname))
-          ;;(message "bnode account icon: %s" iname)
-          ))
-    ;; set up the label, with icon if we got one above:
-    (setq blabel (if aicon (concat (propertize " " 'display aicon) name) name))
-    (if kids
-        (apply 'widget-convert 'tree-widget
-               :open       t
-               :buddy      uid
-               :value      uid
-               :garak-type :bnode
-               :elim-type  type
-               :expander   'garak-buddy-list-node-children
-               :node       (apply 'widget-convert 'menu-choice
-                                  :format    "%[%t%]\n"
-                                  :tag        blabel
-                                  :mouse-down-action 
-                                    'garak-menu-choice-mouse-down-action
-                                  :value      '(noop)
-                                  :value-get 'widget-value-value-get
-                                  :inline     t
-                                  :notify    'garak-buddy-list-node-command
-                                  menu)
-               kids)
-      (apply 'widget-convert
-             'menu-choice
-             :format            "%[%t%]\n"
-             :tag                blabel
-             :value             '(noop)
-             :buddy              uid
-             :garak-type        :bnode
-             :elim-type          type
-             :value-get         'widget-value-value-get
-             :mouse-down-action 'garak-menu-choice-mouse-down-action
-             :inline             t
-             :notify            'garak-buddy-list-node-command
-             menu                )) ))
-
 (defun garak-buddy-list-skip (proc bnode)
   (cond
    ((and garak-hide-offline-buddies
@@ -1906,168 +1833,21 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 ;      (or (elim-buddy proc (elim-avalue "contact-main-child-uid" bnode)) bnode)
 ;    bnode))
 
-(defun garak-account-list-node-widget (process account)
-  (let (adata uid proto iname icon label aname alt)
-    (setq uid   (car account)
-          adata (cdr account)
-          aname (elim-avalue :name  adata)
-          proto (elim-avalue :proto adata)
-          iname (format ":%s" proto)
-          alt   (format "[%-4s] " 
-                        (or (elim-avalue iname garak-icon-tags) " ?? "))
-          icon  (or (tree-widget-find-image iname)
-                    (tree-widget-find-image ":prpl-generic")))
-          
-    ;;(message "garak-account-list-node-widget: %S" account)
-    (setq label (if (and icon (tree-widget-use-image-p))
-                    (concat (propertize alt 'display icon) aname)
-                  (concat alt aname)))
-    (widget-convert 'menu-choice
-                    :format            "%[%t%]\n"
-                    :garak-type        :account
-                    :tag                label
-                    :im-protocol        proto
-                    :value             '(noop)
-                    :account            uid
-                    :mouse-down-action 'garak-menu-choice-mouse-down-action
-                    :value-get         'widget-value-value-get
-                    :inline             t
-                    :notify            'garak-account-list-node-command
-                    (garak-choice-item "Log In"        (cons :login  uid))
-                    (garak-choice-item "Log Out"       (cons :logout uid))
-                    (garak-choice-item "--single-line")
-                    (garak-choice-item "Remove"        (cons :remove uid))
-                    (garak-choice-item "--single-line")
-                    (garak-choice-item "Configure"     (cons :config uid))
-                    (garak-choice-item "Extended Menu" (cons :menu   uid))) ))
-
-
-(defun garak-buddy-list-node-children (widget)
-  (let ((uid (widget-get widget :buddy)) children process dummy kids)
-    ;;(message "Updating children for node %S" uid)
-    (setq process  garak-elim-process
-          children (elim-buddy-children process uid))
-    ;; if the user asked for a sorted list, let there be sorting:
-    (if garak-buddy-list-sort-type
-        (setq children (sort children garak-buddy-list-sort-type)))
-    ;;(elim-debug "(garak-buddy-list-node-children %S) -> %S" (car widget) uid)
-    (setq kids (mapcar
-                (lambda (N)
-                  (let ((bnode (garak-buddy-list-skip process N)))
-                    (when bnode
-                      (garak-buddy-list-node-widget process bnode))))
-                children))
-    (delq nil kids)))
-
-(defun garak-insert-buddy-list-top (proc bnode)
-  (let ((uid (elim-avalue "bnode-uid" bnode)) menu name kids alias rawk spred)
-    (setq ;remove (garak-choice-item "Delete All" (cons :del uid))
-          name   (elim-avalue "bnode-name"  bnode)
-          alias  (elim-avalue "bnode-alias" bnode)
-          name   (if (> (length alias) 0) alias name)
-          spred  garak-buddy-list-sort-type
-          rawk   (elim-buddy-children proc (elim-avalue "bnode-uid" bnode))
-          rawk   (if spred (sort rawk spred) rawk)
-          kids   (mapcar
-                  (lambda (N)
-                    (let ((node (garak-buddy-list-skip proc N)))
-                      (when node (garak-buddy-list-node-widget proc node))))
-                  rawk)
-          kids   (delq nil kids))
-    (if kids
-        (apply 'widget-create
-               'tree-widget
-               :open       t
-               :tag        name
-               :garak-type :bnode
-               :help-echo  nil
-               :buddy      uid
-               :value      uid
-               :open-icon  'garak-tree-widget-open-icon
-               :close-icon 'garak-tree-widget-close-icon
-               :empty-icon 'garak-tree-widget-empty-icon
-               :expander   'garak-buddy-list-node-children
-               kids )
-      (setq menu (list (garak-choice-item ""       (cons :noop uid))
-                       (garak-choice-item "Remove" (cons :del  uid))))
-      (apply 'widget-create
-             'tree-widget
-             :open       t
-             :tag        name
-             :garak-type :bnode
-             :help-echo  nil
-             :buddy      uid
-             :value      uid
-             :open-icon  'garak-tree-widget-open-icon
-             :close-icon 'garak-tree-widget-close-icon
-             :empty-icon 'garak-tree-widget-empty-icon
-             :expander   'garak-buddy-list-node-children
-             :node      (apply 'widget-convert 'menu-choice
-                               :format    "%[%t%]\n"
-                               :tag        name
-                               :value      (cons 'noop uid)
-                               :value-get 'widget-value-value-get
-                               :inline     t
-                               :notify    'garak-buddy-list-node-command
-                               menu) nil)) ))
-
-(defun garak-insert-buddy-list-toplevel (proc bnode)
-  (when (not (assoc "bnode-parent" bnode))
-    ;;(message "toplevel node: %s" (elim-avalue "bnode-name" bnode))
-    (garak-insert-buddy-list-top proc bnode)))
-
-(defun garak-buddy-find-parent (proc uid)
-  (let ((buddy (elim-buddy-data proc uid)) parent)
-    (setq parent (elim-buddy-data proc (elim-avalue "bnode-parent" buddy)))
+(defun garak-buddy-find-parent (proc uid &optional data)
+  "Given the elim process PROC and either the buddy data structure DATA or
+its UID, find the first significant parent of said buddy and return its
+\(the parent's) (uid . property-alist) data structure.\n
+If DATA is provided, it should be the ((:key value) …) alist for the buddy,
+and UID will not be used to find the data in the cache.\n
+A significant parent is either a contact which contains more than one
+buddy or the containing group of UID."
+  (let (buddy parent)
+    (setq buddy  (or data (cdr (elim-buddy-data proc uid)))
+          parent (elim-buddy-data proc (elim-avalue "bnode-parent" buddy)))
     (if (equal (elim-avalue "contact-size" parent) 1)
         (garak-buddy-find-parent proc (car parent))
-      (car parent)) ))
+      parent) ))
 
-(defconst garak-tree-container-classes '(tree-widget-open-icon
-                                         tree-widget-empty-icon
-                                         tree-widget-close-icon
-                                         garak-tree-widget-open-icon
-                                         garak-tree-widget-empty-icon
-                                         garak-tree-widget-close-icon))
-
-(defun garak-tree-widget-real-target (widget)
-  (let ((c (car widget)))
-    (when c
-      (cond ((eq   c 'tree-widget-leaf-icon      ) (widget-get widget :node  ))
-            ((memq c garak-tree-container-classes) (widget-get widget :parent))
-            (t widget))) ))
-
-(defun garak-tree-widget-get (widget &optional prop)
-  (when (not prop) (setq prop :value))
-  (when widget
-    (widget-get (garak-tree-widget-real-target widget) prop)))
-
-(defun garak-tree-widget-set (widget &optional prop value)
-  (when (not prop) (setq prop :value))
-  (when widget
-    (widget-put
-     (garak-tree-widget-real-target widget) prop value)))
-
-(defun garak-tree-widget-apply (widget prop &rest args)
-  (when (and widget prop)
-    ;;(elim-debug "GARAK-TREE-WIDGET-APPLY %S->%S %S"
-    ;;            (car (garak-tree-widget-real-target widget))
-    ;;            (garak-tree-widget-get widget prop)
-    ;;            args)
-    (apply 'widget-apply (garak-tree-widget-real-target widget) prop args)))
-
-(defun garak-ui-find-node (uid type)
-  (let (found target what suid)
-    (setq what   (cond ((eq :buddy   type) "b")
-                       ((eq :account type) "a")
-                       (t                  "x"))
-          suid   (format "%s" uid)
-          target (concat "^.." what " \\[\\S-+\\]" suid "\\s-"))
-    (save-excursion
-      (goto-char (point-min))
-      (when (search-forward-regexp target nil t)
-        (setq found (line-beginning-position))))
-    found))
 
 (defun garak-buddy-node-label (buddy)
   "Given a buddy node entry BUDDY, return a suitable label - typically
@@ -2141,127 +1921,32 @@ NODE-A and NODE-B must be standard (uid ((name . value) ...)) nodes or nil."
                     (equal bname garak-conv-name )))) )) ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; update buddy request, these can swamp us so we cache them and deal with 
-;; them in an idle fiunction:
-(defvar garak-update-buddy-requests nil)
-(defvar garak-update-buddy-timer    nil)
-(defvar garak-update-buddy-index    nil)
-(defvar garak-updated-blist-groups  nil)
-(defconst garak-update-buddy-block  100)
-
-(defun garak-apply-delayed-blist-updates (proc &optional buffer)
-  (if (not buffer)
-      (setq buffer (elim-fetch-process-data proc :blist-buffer)))
-  (if (buffer-live-p buffer)
-      (with-current-buffer buffer
-        (let ((inhibit-redisplay nil) seen point widget)
-          (mapc
-           (lambda (puid) 
-             (when (not (member puid seen))
-               (setq seen  (cons puid seen)
-                     point (car (garak-ui-find-node puid :buddy)))
-               (and point (setq widget (widget-at point)) ;; found widget
-                    (garak-tree-widget-get widget :open)  ;; & it's open 
-                    (progn (widget-apply widget :action)
-                           (widget-apply widget :action))) ))
-           garak-updated-blist-groups)
-          (setq garak-updated-blist-groups nil)) )) )
-
-(defun garak-update-buddy-delayed (proc)
-  (sit-for 0)
-  (let (reqs op fn req buffer (i 0))
-    (message "processing delayed buddy updates [%d buckets]" 
-             (length garak-update-buddy-requests))
-    ;; pop the oldest bucket off the queue:
-    (setq reqs                        (car garak-update-buddy-requests)
-          garak-update-buddy-requests (cdr garak-update-buddy-requests))
-    ;; (message "%d buckets remaining" (length garak-update-buddy-requests))
-    ;; process all the requests in the bucket:
-    (while (and (< i (length reqs))
-                (setq req (aref reqs i)))
-      (setq i  (1+  i)
-            fn (car req)
-            op (cond ((eq fn 'elim-blist-update-node) 'garak-update-buddy)
-                     ((eq fn 'elim-blist-remove-node) 'garak-delete-buddy)))
-      (apply op proc req)
-      (sit-for 0 t))
-    (if garak-update-buddy-requests
-        (setq garak-update-buddy-timer
-              (run-with-idle-timer 3 nil 'garak-update-buddy-delayed proc))
-      ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-      ;; finally! we emptied the list of ui updates. unset the timer
-      (setq garak-update-buddy-timer nil)
-      (garak-apply-delayed-blist-updates proc)) ))
-
-(defun garak-queue-buddy-update (proc req &optional cache)
-  ;; current cache bucket, if any
-  (setq cache (car (last garak-update-buddy-requests)))
-  ;; if the bucket is full, reset the bucket pointer and apply any updates
-  ;; we've already processed from the cache:
-  (when (and garak-update-buddy-index
-             (>= garak-update-buddy-index (length cache)))
-    (setq garak-update-buddy-index nil)
-    (garak-apply-delayed-blist-updates proc))
-  ;; if the bucket pointer is unset, initialise a new bucket
-  (if (not garak-update-buddy-index)
-      (setq garak-update-buddy-index 0
-            cache (make-vector garak-update-buddy-block nil)
-            garak-update-buddy-requests
-            (nconc garak-update-buddy-requests (list cache))))
-  ;;(message "item %d added to bucket %d"
-  ;;         garak-update-buddy-index 
-  ;;         (length garak-update-buddy-requests))
-  (aset cache garak-update-buddy-index req)
-  (setq garak-update-buddy-index (1+ garak-update-buddy-index)))
-
-(defun garak-update-buddy-req (proc name id attr args)
-  (garak-queue-buddy-update proc (list name id attr args))
-  (when (not garak-update-buddy-timer)
-    (setq garak-update-buddy-timer
-          (run-with-idle-timer 3 nil 'garak-update-buddy-delayed proc)) ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;!! update icon of a visible(?) node
 (defun garak-update-buddy (proc name id status args)
-  (let (buid buddy where-widget point widget buffer other)
+  "Update a buddy/contact/chat/group node's display in the UI.
+May require finding the parent if the target is not currently present
+in the UI buffer, or removing the entry if we were asked to delte it."
+  (let (buid buddy btype buffer where visible puid parent ptype)
     (setq buffer (elim-fetch-process-data proc :blist-buffer)
-          buid   (elim-avalue    "bnode-uid" args)
+          buid   (elim-avalue    "bnode-uid"  args)
+          btype  (elim-avalue    "bnode-type" args)
           buddy  (elim-buddy-data       proc buid))
     (garak-update-buddy-conversations proc buddy)
-    (sit-for 0 t) ;; allow the user to grab control/focus here
+    (sit-for 0) ;; lets the user pre-empt and take control
     (when (buffer-live-p buffer)
-      (with-current-buffer buffer
-        (setq other (garak-buddy-list-skip proc buddy))
-
-        ;; if the bnode is not in the "ignored" class, buddy will eq other:
-        (when (eq buddy other)
-          (setq buid (elim-avalue "bnode-uid" args))
-
-          ;; find the parent node and reset its kids list and cache:
-          (let ((puid (garak-buddy-find-parent proc buid)) parent kids group)
-            (setq where-widget (garak-ui-find-node puid :buddy)
-                  parent       (elim-buddy-data proc puid)
-                  point        (car where-widget)
-                  widget       (widget-at point))
-            (when (and (memq (elim-avalue "bnode-type" parent)
-                             '(:group-node :contact-node))
-                       (garak-tree-widget-get widget :node))
-              (setq kids (garak-tree-widget-apply widget :expander)
-                    group t)
-              (garak-tree-widget-set widget :args kids))
-
-            ;; if the parent widget was not visible, add it now:
-            (if where-widget
-                nil ;; nothing to do here, visible widgets are updated later
-              (save-excursion
-                (goto-char (point-max))
-                (garak-insert-buddy-list-top proc (elim-buddy-data proc puid))))
-
-            ;; remember that we need to update this group (if it's a group
-            ;; or contact, weird if it's not, but hey):
-            (if group
-                (setq garak-updated-blist-groups
-                      (cons puid garak-updated-blist-groups)) )) )) )))
+      (set-buffer buffer)
+      (save-excursion
+        (setq where   (garak-blist-find-node buid btype)
+              visible (eq 'emagilim-blist-update-node name))
+        (cond (where ;; entry is present in the buffer
+               (if visible ;; if new state is visible, update entry
+                   (garak-blist-update-buddy-at where args)
+                 (garak-blist-delete-buddy-at where)))
+              (visible ;; entry is currently not visible but we want it to be
+               (when (setq parent (garak-buddy-find-parent proc buid args))
+                 (if (setq puid  (car parent)
+                           ptype (elim-avalue "bnode-type" parent)
+                           where (garak-blist-find-node puid ptype))
+                     (garak-blist-insert-buddy-in-group-at where args)))) ))) ))
 
 (defalias 'garak-connection-progress 'garak-account-update)
 (defun garak-account-update (proc name id status args)
@@ -2277,7 +1962,7 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
     ;; proceed to updating the blist ui buffer
     (when (buffer-live-p buffer)
       (with-current-buffer buffer
-        (setq where (garak-ui-find-node auid :account))
+        (setq where (garak-blist-find-node auid :account))
 
         (cond ;; account is present but should be removed:
               ((and (eq 'remove-account name) where)
@@ -2298,105 +1983,6 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
                ;;(insert (garak-blist-account-text adata) "\n")
                )
               ) )) ))
-
-(defun garak-delete-buddy (proc name id status args)
-  (let ((inhibit-read-only t) buid puid where-widget point widget buffer dummy)
-    (setq buffer (elim-fetch-process-data proc :blist-buffer))
-    (when (buffer-live-p buffer)
-      (with-current-buffer buffer
-        (setq buid (elim-avalue "bnode-uid"    args)
-              puid (elim-avalue "bnode-parent" args))
-        ;; (message "garak-delete-buddy: %S" puid)
-        (if puid
-            (let (parent kfun kids)
-              ;; if the parent is skippable, find a non-skippable ancestor:
-              ;; we can't use normal buddy methods because it has already
-              ;; been deleted from elim's cache by now: the parent should still
-              ;; be alive though as children are reaped before ancestors:
-              (setq parent (elim-buddy-data proc puid))
-              (when (equal (elim-avalue "contact-size" parent) 1)
-                (setq puid   (garak-buddy-find-parent proc puid)
-                      parent (elim-buddy-data proc puid)))
-              ;; ok: by now we should have a live ancestor: find its node:
-              (when (setq where-widget (garak-ui-find-node puid :buddy))
-                (setq point  (car where-widget)
-                      widget (widget-at  point))
-                (when (and (memq (elim-avalue "bnode-type" parent)
-                                 '(:group-node :contact-node))
-                           (garak-tree-widget-get widget :node))
-                  (setq kids (garak-tree-widget-apply widget :expander))
-                  (garak-tree-widget-set widget :args kids)
-                  (when (garak-tree-widget-get widget :open)
-                    (widget-apply widget :action)
-                    (widget-apply widget :action))) ))
-          ;; need to delete a top-level node:
-          (when (and (setq where-widget (garak-ui-find-node buid :buddy))
-                     (setq point  (car where-widget)
-                           widget (widget-at point)
-                           widget (garak-tree-widget-real-target widget)))
-            (widget-children-value-delete widget)
-            ;; (message "point AFTER deletion: %S" (point))
-            (when (eq (car-safe (get-text-property (1- point) 'display)) 'space)
-              (delete-char -1)) )) )) ))
-
-(defun garak-buddy-list-choose-icon (widget buddy)
-  (let ((class (if (consp widget) (car widget) widget))
-        type blocked online allowed)
-    (setq type    (elim-avalue "bnode-type" buddy)
-          allowed (elim-avalue "allowed"    buddy))
-    (cond ((eq class 'tree-widget-empty-icon) ":invisible")
-          ((eq type :chat-node              ) ":chat"     )
-          ((eq type :group-node             ) ":group"    )
-          ((eq type :contact-node           )
-           (setq online (elim-avalue "contact-online-buddies" buddy))
-           (if (and online (< 0 online)) ":person" ":off"))
-          ((eq type :buddy-node             )
-           (if (not allowed) ":blocked"
-             (symbol-name (elim-avalue "status-type" buddy))) )) ))
-
-(defun garak-account-list-choose-icon (conn-data status-data)
-  (let ((status (elim-avalue "status-type" status-data))
-        (conn   (elim-avalue "state"       conn-data  ))
-        (online (elim-avalue "connected"   status-data)) icon)
-    (setq icon (cond ((eq   conn :connecting   ) ":connecting"   )
-                     ((eq   conn :disconnected ) ":off"          )
-                     ((null conn               ) ":off"          )
-                     ((eq status :offline      ) ":off"          )
-                     ((eq status :available    ) ":on"           )
-                     ((eq status :unavailable  ) ":unavailable"  )
-                     ((eq status :invisible    ) ":invisible"    )
-                     ((eq status :away         ) ":away"         )
-                     ((eq status :extended-away) ":extended-away")
-                     ((eq status :mobile       ) ":away"         )
-                     ((eq status :tune         ) ":away"         )
-                     ((eq conn   :connected    ) ":on"           )
-                     (online                     ":on"           )
-                     (t                          ":off"          )))
-    ;;(message "%s -> %s" (elim-avalue "account-name" status-data) icon)
-    icon))
-
-(defun garak-ui-node-setup-icon (wicon)
-  (let ((class   (car wicon))
-        (process garak-elim-process)
-        buddy buid account auid status icon tag online gtype conn)
-    (setq gtype (garak-tree-widget-get wicon :garak-type))
-    ;; choose an appropriate icon, depending on the node type:
-    (cond ((eq gtype :bnode)
-           (when (and (setq buid  (garak-tree-widget-get wicon :buddy))
-                      (setq buddy (elim-buddy-data process buid )))
-             (setq icon (garak-buddy-list-choose-icon wicon buddy)) ))
-          ((eq gtype :account)
-           (when (setq auid (garak-tree-widget-get wicon :account))
-             (setq status (elim-account-status     process auid)
-                   conn   (elim-account-connection process auid))
-             (setq icon (garak-account-list-choose-icon conn status)) ))
-          ((eq gtype :accounts) (setq icon ":garak")))
-    ;; set the icon, if we have an image in our set:
-    (when (and icon (assoc icon garak-icons))
-      (when (tree-widget-use-image-p)
-        (widget-put wicon :glyph-name icon))
-      (when (setq tag (elim-avalue icon garak-icon-tags))
-        (widget-put wicon :tag tag)) ) ))
 
 (defun garak-request-add-buddy-nok (&rest args)
   (kill-buffer nil))
@@ -2445,67 +2031,6 @@ elim-connection-state or elim-connection-progress, but any call can be handled a
       (goto-char (point-min))
       (widget-forward 1))
     (display-buffer buf)))
-
-(defun garak-ui-node-item-p ()
-  (let ((widget (widget-at)))
-    (or (widget-get widget :buddy  )
-        (widget-get widget :account))))
-
-(defun garak-ui-node-account-p ()
-  (message "checking widget at %S" (point))
-  (widget-get (widget-at) :account))
-
-(defun garak-ui-node-channel-p ()
-  (let ((widget (widget-at)))
-    (and (widget-get widget :buddy)
-         (eq (widget-get widget :elim-type) :chat-node))))
-
-(defun garak-ui-node-contact-p ()
-  (let ((widget (widget-at)))
-    (and (widget-get widget :buddy)
-         (eq (widget-get widget :elim-type) :buddy-node))))
-
-(defun garak-ui-next-node (&optional type jump)
-  (let (last check-node target boundary step (missed 0))
-    (or jump (setq jump 1))
-    (setq step     (if (< jump 0) -1 1)
-          boundary (if (eq step -1) '>= '<=))
-    (setq check-node (cond ((eq type :contact) 'garak-ui-node-contact-p)
-                           ((eq type :channel) 'garak-ui-node-channel-p)
-                           ((eq type :account) 'garak-ui-node-account-p)
-                           (t 'garak-ui-node-item-p)))
-    (while (/= jump 0)
-      (setq last (point))
-      (ignore-errors (widget-move step))
-      ;; if we've wrapped more than once, abort:
-      (if (and (funcall boundary (point) last)
-               (< 1 (setq missed (1+ missed))))
-          (setq jump 0)
-        ;; otherwise if it's the right kind of node and count it off
-        (if (funcall check-node)
-            (setq target (point)
-                  jump   (- jump step))) ))
-    (if target (goto-char target))))
-
-(defun garak-ui-prev-item (jump)
-  (interactive "p")
-  (garak-ui-next-node nil (- jump)))
-
-(defun garak-ui-next-item (jump)
-  (interactive "p")
-  (garak-ui-next-node nil jump))
-
-(defun garak-ui-next-contact (&optional jump)
-  (interactive "p")
-  (garak-ui-next-node :contact jump))
-
-(defun garak-ui-next-channel (&optional jump)
-  (interactive "p")
-  (garak-ui-next-node :channel jump))
-
-(defun garak-ui-next-account (&optional jump)
-  (interactive "p")
-  (garak-ui-next-node :account jump))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; commands

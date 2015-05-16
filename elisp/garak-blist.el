@@ -92,7 +92,8 @@
                    ((eq type :buddy-node  )
                     (if (not allowed)
                         ":blocked"
-                      (symbol-name (elim-avalue "status-type" node-data))) )) ))
+                      (symbol-name (elim-avalue "status-type" node-data))) )
+                   (t ":offline")) ))
           (t ":off")) ))
 
 (defun garak-blist-node-status-props ()
@@ -128,7 +129,8 @@
           auid  (elim-avalue "account-uid"   bnode)
           proto (elim-avalue "im-protocol"   bnode)
           name  (if (< 0 (length cname)) cname (garak-buddy-node-label bnode)))
-    (setq proto (if proto (replace-regexp-in-string "^:?prpl-" "" proto) nil))
+    (setq proto (if proto (replace-regexp-in-string "^:?prpl-" "" proto)))
+    (if (and (not prefix) (eq :group-node type)) (setq prefix ?+))
     (if (and (not proto) auid)
         (setq adata (elim-account-data garak-elim-process auid)
               proto (elim-avalue :proto adata)))
@@ -231,6 +233,23 @@ if the keypress or mouse-click is on an account or contact."
               (garak-blist-insert-buddy-toplevel b)))
         (elim-buddy-list garak-elim-process)))
 
+(defun garak-blist-insert-buddy-in-group-at (point data)
+  (goto-char point)
+  (forward-line 1)
+  (if (eobp) (insert "\n"))
+  (insert (if (looking-at "\\+\\|\\s-*$") "└─" "├─")
+          (garak-blist-buddy-text data) "\n"))
+
+(defun garak-blist-update-buddy-at (point data)
+  (goto-char point)
+  (or (looking-at "+") (forward-char 2))
+  (delete-region (point) (line-end-position))
+  (insert (garak-blist-buddy-text data)))
+
+(defun garak-blist-delete-buddy-at (point)
+  (goto-char point)
+  (let ((kill-whole-line t)) (kill-line)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; account entry handlers
 (defun garak-blist-insert-account-list (&optional account-list)
@@ -273,6 +292,28 @@ if the keypress or mouse-click is on an account or contact."
 ;;     ;; whatever the initial conditions, if we reach here we're at the
 ;;     ;; start of a blank line where we should insert the account entry
 ;;     (insert "|- [%s] %s %s" pname uid aname) ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Movement and navigation
+(defun garak-blist-find-node (uid type)
+  "Given UID (for account, buddy etc) and TYPE (:account, :buddy-node,
+:contact-node or :group-node) find the position of the start of the
+line on which that UID's widget lies.\n
+Returns that point, if found, or nil."
+  (let (found target what suid)
+    (setq what (cond ((eq :buddy-node       type) "^..b")
+                     ((eq :chat-node        type) "^..b")
+                     ((eq :contact-node     type) "^..c")
+                     ((eq :group-node       type) "^\\+")
+                     ((eq :account          type) "^..a")))
+    (when (and uid what)
+      (setq suid   (format "%s" uid)
+            target (concat what " \\[\\S-+\\]" suid "\\s-"))
+      (save-excursion
+        (goto-char (point-min))
+        (when (search-forward-regexp target nil t)
+          (setq found (line-beginning-position)))))
+    found))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; the mode itself
