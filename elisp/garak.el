@@ -1938,7 +1938,7 @@ in the UI buffer, or removing the entry if we were asked to delte it."
       (set-buffer buffer)
       (save-excursion
         (setq where   (garak-blist-find-node buid btype)
-              visible (eq 'emagilim-blist-update-node name))
+              visible (eq 'elim-blist-update-node name))
         (cond (where ;; entry is present in the buffer
                (if visible ;; if new state is visible, update entry
                    (garak-blist-update-buddy-at where args)
