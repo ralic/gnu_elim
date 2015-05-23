@@ -304,7 +304,7 @@ Returns that point, if found, or nil."
   (let (found target what suid)
     (setq what (cond ((eq :buddy-node       type) "^..b")
                      ((eq :chat-node        type) "^..b")
-                     ((eq :contact-node     type) "^..c")
+                     ((eq :contact-node     type) "^..b")
                      ((eq :group-node       type) "^\\+")
                      ((eq :account          type) "^..a")))
     (when (and uid what)
