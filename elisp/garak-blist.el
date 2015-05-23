@@ -219,7 +219,7 @@ if the keypress or mouse-click is on an account or contact."
     (if spred (setq kids (sort kids spred)))
     (setq kids
           (mapcar (lambda (N)
-                    (and (garak-buddy-list-skip garak-elim-process N) N)) kids)
+                    (and (garak-buddy-list-show garak-elim-process N) N)) kids)
           kids (delq nil kids))
     (while kids
       (setq last (not (cdr kids)))

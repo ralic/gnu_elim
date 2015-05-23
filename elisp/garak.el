@@ -1815,7 +1815,9 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
              (elim-account-menu proc auid menu-cb) ))
           (t (elim-debug "UI Account Operation `%S' not implemented" value))) ))
 
-(defun garak-buddy-list-skip (proc bnode)
+(defun garak-buddy-list-show (proc bnode)
+  "Given an elim process PROC and a buddy data structure BNODE, return the
+buddy UID of the buddy to be displayed, or nil if nothing should be displayed."
   (cond
    ((and garak-hide-offline-buddies
          (or (eq (elim-avalue "contact-online-buddies" bnode) 0)
