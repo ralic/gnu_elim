@@ -1817,12 +1817,11 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
 
 (defun garak-buddy-list-show (proc bnode)
   "Given an elim process PROC and a buddy data structure BNODE, return the
-buddy UID of the buddy to be displayed, or nil if nothing should be displayed."
+buddy to be displayed, or nil if nothing should be displayed."
   (cond
    ;; contacts with only one actual child (buddy) are skipped
-   ((eq (elim-avalue "contact-online-buddies" bnode) 1) nil)
-   ;; for a contact of size 1, skip it
-   ((eq (elim-avalue "contact-size" bnode) 1) nil)
+   ((eq (elim-avalue "contact-online-buddies" bnode) 1)
+    (elim-buddy proc (elim-avalue "contact-main-child-uid" bnode)))
    ;; offline contacts/buddies are skipped if garak-hide-offline-buddies is set
    ((and garak-hide-offline-buddies
          (or ;; entry has an explicit offline status
@@ -1834,6 +1833,9 @@ buddy UID of the buddy to be displayed, or nil if nothing should be displayed."
              (and (eq (elim-avalue "bnode-type" bnode) :contact-node)
                   (not (elim-buddy-children
                         proc (elim-avalue "bnode-uid" bnode)))) )) nil)
+   ;; skip single-child contacts in favour of their children
+   ((eq (elim-avalue "contact-size" bnode) 1)
+    (elim-buddy proc (elim-avalue "contact-main-child-uid" bnode)))
    ;; no special treatment, just display it
    (t bnode)) )
 
