@@ -1819,15 +1819,22 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
   "Given an elim process PROC and a buddy data structure BNODE, return the
 buddy UID of the buddy to be displayed, or nil if nothing should be displayed."
   (cond
+   ;; contacts with only one actual child (buddy) are skipped
+   ((eq (elim-avalue "contact-online-buddies" bnode) 1) nil)
+   ;; for a contact of size 1, skip it
+   ((eq (elim-avalue "contact-size" bnode) 1) nil)
+   ;; offline contacts/buddies are skipped if garak-hide-offline-buddies is set
    ((and garak-hide-offline-buddies
-         (or (eq (elim-avalue "contact-online-buddies" bnode) 0)
-             ;; contact-online-buddies is not reliable, but it is cheap.
-             ;; double check: a contact with no children is really offline:
+         (or ;; entry has an explicit offline status
+             (eq (elim-avalue "status-type" bnode) :offline)
+             ;; contact has no online child entries and is ∴ offline itself
+             (eq (elim-avalue "contact-online-buddies" bnode) 0)
+             ;; contact-online-buddies of 0 is accurate, but other values
+             ;; must be double-checked: do we actually have any online kids?
              (and (eq (elim-avalue "bnode-type" bnode) :contact-node)
-                  (not (elim-buddy-children proc (car bnode)))) ))
-    nil)
-   ((eq (elim-avalue "contact-size" bnode) 1)
-    (or (elim-buddy proc (elim-avalue "contact-main-child-uid" bnode)) bnode))
+                  (not (elim-buddy-children
+                        proc (elim-avalue "bnode-uid" bnode)))) )) nil)
+   ;; no special treatment, just display it
    (t bnode)) )
 
 ;(defun garak-buddy-list-skip (proc bnode)
