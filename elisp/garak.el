@@ -1936,18 +1936,22 @@ NODE-A and NODE-B must be standard (uid ((name . value) ...)) nodes or nil."
   "Update a buddy/contact/chat/group node's display in the UI.
 May require finding the parent if the target is not currently present
 in the UI buffer, or removing the entry if we were asked to delte it."
-  (let (buid buddy btype buffer where visible puid parent ptype)
+  (let (buid buddy btype buffer where visible puid parent ptype state)
     (setq buffer (elim-fetch-process-data proc :blist-buffer)
-          buid   (elim-avalue    "bnode-uid"  args)
-          btype  (elim-avalue    "bnode-type" args)
-          buddy  (elim-buddy-data       proc buid))
+          buid   (elim-avalue "bnode-uid"   args)
+          btype  (elim-avalue "bnode-type"  args)
+          state  (elim-avalue "status-type" args)
+          buddy  (elim-buddy-data proc buid))
     (garak-update-buddy-conversations proc buddy)
     (sit-for 0) ;; lets the user pre-empt and take control
-    (when (buffer-live-p buffer)
+    ;; figure out whether the entry should be visible after this update:
+    (setq visible (and (eq 'elim-blist-update-node name)
+                       (garak-buddy-list-show proc args)))
+    (when (buffer-live-p buffer)  ;; have a UI to update
       (set-buffer buffer)
       (save-excursion
-        (setq where   (garak-blist-find-node buid btype)
-              visible (eq 'elim-blist-update-node name))
+        ;; find the entry's current location, nil for not present:
+        (setq where (garak-blist-find-node buid btype))
         (cond (where ;; entry is present in the buffer
                (if visible ;; if new state is visible, update entry
                    (garak-blist-update-buddy-at where args)
