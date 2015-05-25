@@ -1951,13 +1951,14 @@ in the UI buffer, or removing the entry if we were asked to delte it."
       (set-buffer buffer)
       (save-excursion
         ;; find the entry's current location, nil for not present:
-        (setq where (garak-blist-find-node buid btype))
+        (setq where (garak-blist-find-node
+                     (elim-avalue "bnode-uid" visible) btype))
         (cond (where ;; entry is present in the buffer
                (if visible ;; if new state is visible, update entry
-                   (garak-blist-update-buddy-at where args)
+                   (garak-blist-update-buddy-at where visible)
                  (garak-blist-delete-buddy-at where)))
               (visible ;; entry is currently not visible but we want it to be
-               (when (setq parent (garak-buddy-find-parent proc buid args))
+               (when (setq parent (garak-buddy-find-parent proc nil visible))
                  (if (setq puid  (car parent)
                            ptype (elim-avalue "bnode-type" parent)
                            where (garak-blist-find-node puid ptype))
