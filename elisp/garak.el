@@ -1962,7 +1962,7 @@ in the UI buffer, or removing the entry if we were asked to delte it."
                  (if (setq puid  (car parent)
                            ptype (elim-avalue "bnode-type" parent)
                            where (garak-blist-find-node puid ptype))
-                     (garak-blist-insert-buddy-in-group-at where args)))) ))) ))
+                     (garak-blist-insert-buddy-in-group-at where visible)))) ))) ))
 
 (defalias 'garak-connection-progress 'garak-account-update)
 (defun garak-account-update (proc name id status args)
