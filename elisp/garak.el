@@ -1947,7 +1947,7 @@ NODE-A and NODE-B must be standard (uid ((name . value) ...)) nodes or nil."
   "Update a buddy/contact/chat/group node's display in the UI.
 May require finding the parent if the target is not currently present
 in the UI buffer, or removing the entry if we were asked to delte it."
-  (let (buid buddy btype buffer where visible puid parent ptype state)
+  (let (buid buddy btype buffer where visible parent state)
     (setq buffer (elim-fetch-process-data proc :blist-buffer)
           buid   (elim-avalue "bnode-uid"   args)
           btype  (elim-avalue "bnode-type"  args)
@@ -1972,9 +1972,7 @@ in the UI buffer, or removing the entry if we were asked to delte it."
                  (garak-blist-delete-buddy-at where)))
               (visible ;; entry is currently not visible but we want it to be
                (when (setq parent (garak-buddy-find-parent proc nil visible))
-                 (if (setq puid  (car parent)
-                           ptype (elim-avalue "bnode-type" parent)
-                           where (garak-blist-find-node puid ptype))
+                 (if (setq where (garak-blist-add-container parent))
                      (garak-blist-insert-buddy-in-group-at where visible)))) ))) ))
 
 (defalias 'garak-connection-progress 'garak-account-update)

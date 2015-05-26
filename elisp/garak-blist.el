@@ -259,6 +259,23 @@ if the keypress or mouse-click is on an account or contact."
         (delete-char 2)
         (insert   "└─")))))
 
+(defun garak-blist-add-container (bnode)
+  (let (uid type prefix where)
+    (setq type   (elim-avalue "bnode-type" bnode)
+          prefix (cond
+                  ((eq :group-node type) ?+)
+                  ((eq :contact-node type)
+                   (if (> (elim-avalue "contact-online-buddies" bnode) 1) ?b))))
+    (when prefix
+      (setq uid   (elim-avalue "bnode-uid"  bnode)
+            where (garak-blist-find-node uid type))
+      (when (not where)
+        (goto-char (1+ (point-min)))
+        (when (re-search-forward "^\\s-*$" nil t)
+          (setq where (1+ (goto-char (match-beginning 0))))
+          (insert "\n" (garak-blist-buddy-text bnode ?+) "\n"))))
+    where))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; account entry handlers
 (defun garak-blist-insert-account-list (&optional account-list)
