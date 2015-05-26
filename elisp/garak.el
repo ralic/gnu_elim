@@ -39,6 +39,17 @@
                         (or load-file-name buffer-file-name)) load-path)))
   (when (not (featurep 'lui )) (require 'lui ))
   (when (not (featurep 'elim)) (require 'elim)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; debug helpers
+(defvar garak-debug nil)
+(defvar garak-debug-buffer nil)
+(defun garak-debug (fmt &rest args)
+  (when garak-debug
+    (with-current-buffer
+        (or garak-debug-buffer
+            (setq garak-debug-buffer (get-buffer-create "*garak-debug*")))
+      (goto-char (point-max))
+      (insert (apply 'format fmt args) "\n"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; customisation group
