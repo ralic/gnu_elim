@@ -249,8 +249,15 @@ if the keypress or mouse-click is on an account or contact."
   (insert (garak-blist-buddy-text data)))
 
 (defun garak-blist-delete-buddy-at (point)
-  (goto-char point)
-  (let ((kill-whole-line t)) (kill-line)))
+  (let (last)
+    (goto-char point)
+    (setq last (looking-at "└─"))
+    (let ((kill-whole-line t)) (kill-line))
+    (when last
+      (forward-line -1)
+      (when (looking-at "[^└]─")
+        (delete-char 2)
+        (insert   "└─")))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; account entry handlers
