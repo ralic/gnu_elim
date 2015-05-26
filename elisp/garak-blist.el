@@ -252,7 +252,7 @@ if the keypress or mouse-click is on an account or contact."
   (let (last)
     (goto-char point)
     (setq last (looking-at "└─"))
-    (let ((kill-whole-line t)) (kill-line))
+    (delete-region (point-at-bol) (min (1+ (point-at-eol)) (point-max)))
     (when last
       (forward-line -1)
       (when (looking-at "[^└]─")
