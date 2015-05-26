@@ -291,34 +291,6 @@ if the keypress or mouse-click is on an account or contact."
               (if last "\n\n" "\n"))
       (setq account-list (cdr account-list))) ))
 
-;; (defun garak-blist-update-account (account &optional point)
-;;   (let (adata uid proto iname icon label pname aname alt)
-;;     (setq uid   (car account)
-;;           adata (cdr account)
-;;           aname (elim-avalue :name  adata)
-;;           proto (elim-avalue :proto adata)
-;;           pname (substring proto 5)
-;;           iname (format ":%s" proto)
-;;           alt   (format "[%-4s] "
-;;                         (or (elim-avalue iname garak-icon-tags) " ?? "))
-;;           icon  (or (tree-widget-find-image iname)
-;;                     (tree-widget-find-image ":prpl-generic")))
-;;     (if (not point)
-;;         ;; no location supplied by caller
-;;         (if (garak-blist-find-account uid) ;; found account location
-;;             (progn (forward-line 0) (kill-line) (setq point (point)))
-;;           ;; new account entry, find account list:
-;;           (goto-char (point-min))
-;;           (if (not (search-forward "Gª" nil t))
-;;               (error "garak-blist-update-account called, no account list")
-;;             (end-of-line)
-;;             (insert "\n ")
-;;             (setq point (point))))
-;;       (goto-char point))
-;;     ;; whatever the initial conditions, if we reach here we're at the
-;;     ;; start of a blank line where we should insert the account entry
-;;     (insert "|- [%s] %s %s" pname uid aname) ))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Movement and navigation
 (defun garak-blist-find-node (uid type)
