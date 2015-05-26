@@ -1729,6 +1729,7 @@ ARGS    : The raw args passed to whatever function called garak-alert-user"
       ;; (garak-icon-theme-init)
       (setq elim-form-ui-args (list :process proc))
       (erase-buffer)
+      (setq line-spacing 0)
       (garak-blist-insert-account-list)
       (garak-blist-insert-buddy-list)
       (garak-blist-mode))
