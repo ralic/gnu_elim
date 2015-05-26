@@ -1964,6 +1964,8 @@ in the UI buffer, or removing the entry if we were asked to delte it."
         ;; find the entry's current location, nil for not present:
         (setq where (garak-blist-find-node
                      (elim-avalue "bnode-uid" (or visible args)) btype))
+        (garak-debug "args    : %S\nvisible : %S\nwhere   : %S\n"
+                     args visible where)
         (cond (where ;; entry is present in the buffer
                (if visible ;; if new state is visible, update entry
                    (garak-blist-update-buddy-at where visible)
