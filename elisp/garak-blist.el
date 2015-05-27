@@ -232,10 +232,11 @@ if the keypress or mouse-click is on an account or contact."
       (setq kids (cdr kids))) ))
 
 (defun garak-blist-insert-buddy-list ()
-  (mapc (lambda (b)
-          (or (assoc "bnode-parent" b)
-              (garak-blist-insert-buddy-toplevel b)))
-        (elim-buddy-list garak-elim-process)))
+  (save-excursion
+    (mapc (lambda (b)
+            (or (assoc "bnode-parent" b)
+                (garak-blist-insert-buddy-toplevel b)))
+          (elim-buddy-list garak-elim-process))))
 
 (defun garak-blist-insert-buddy-in-group-at (point data)
   (goto-char point)
