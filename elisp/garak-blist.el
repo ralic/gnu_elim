@@ -139,38 +139,40 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; keymap functions
-(defun garak-blist-maybe-pop-menu (&optional here)
+(defun garak-blist-maybe-pop-menu (&optional here keys)
   "Handles events in the buddy list buffer, popping up a menu
 if the keypress or mouse-click is on an account or contact."
   (interactive "@")
-  (setq here (this-command-keys)
-        here (if (and (vectorp here)
-                      (setq here (aref here 0))
-                      (eventp here))
-                 (posn-point (event-start here))
+  (setq keys (this-command-keys)
+        here (if (and (vectorp keys)
+                      (setq keys (aref keys 0))
+                      (eventp keys))
+                 (posn-point (event-start keys))
                (point)))
   (save-excursion
     (goto-char here)
     (goto-char (point-at-bol))
-    (message "invoking garak-blist-maybe-pop-menu at %S" (point))
+    ;;(message "invoking garak-blist-maybe-pop-menu at %S in response to %S"
+    ;;         (point) keys)
     (cond ((looking-at garak-blist-root-node-re)
            (garak-blist-open-close-group))
           ;; the ccount menu
           ((looking-at garak-blist-account-node-re)
-           (garak-blist-pop-account-menu (match-string 1)))
+           (garak-blist-pop-account-menu (match-string 1) keys))
           ;; the buddy menu
           ((looking-at garak-blist-contact-node-re)
-           (garak-blist-pop-contact-menu (match-string 1)))) ))
+           (garak-blist-pop-contact-menu (match-string 1) keys))) ))
 
-(defun garak-blist-pop-account-menu (acct)
+(defun garak-blist-pop-account-menu (acct &optional event)
   ""
-  (let (menu data name op proc ccb menu-cb handler)
+  (let (menu data name op proc ccb menu-cb handler ev)
     (setq acct    (garak-blist-name-or-uid acct)
           proc     garak-elim-process
           ccb     'garak-account-options-ui-cb
           data    (elim-account-status garak-elim-process acct)
           name    (garak-blist-node-name data)
           handler 'garak-account-list-node-command
+          ev      (and (eventp event) event)
           menu    (list name
                         (cons name
                               '(("Log In"         :login )
@@ -191,7 +193,7 @@ if the keypress or mouse-click is on an account or contact."
            (setq menu-cb
                  (lambda (proc name id attr args)
                    (garak-account-menu-response-handler proc name id
-                                                        attr args nil)))
+                                                        attr args ev)))
            (elim-account-menu proc acct menu-cb) )
           (t (elim-debug "UI Account Operation `%S' not implemented" op))) ))
 
